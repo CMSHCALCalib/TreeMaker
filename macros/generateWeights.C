@@ -14,7 +14,7 @@ TChain* loadChain(std::string fileList)
       while (std::getline(file, str))
 	{
 	  chain->Add(str.c_str()); 
-	  std::cout << "+++ Added file: " << fileList << std::endl;
+	  std::cout << "+++ Added file: " << str << std::endl;
 	}
     }
   return chain;
@@ -41,10 +41,13 @@ void generateWeights(std::string dataFileList, std::string mcFileList)
   dataTree->Draw("pileup >> h_puData","","");
   mcTree->Draw("pileup >> h_puMC","","");
 
+  h_puData->Scale(1/h_puData->GetEntries());
+  h_puMC->Scale(1/h_puMC->GetEntries());
+
   for(unsigned int bin=1; bin<h_puData->GetNbinsX(); ++bin)
     {
-      int num = h_puData->GetBinContent(bin);
-      int den = h_puMC->GetBinContent(bin);
+      float num = h_puData->GetBinContent(bin);
+      float den = h_puMC->GetBinContent(bin);
       h_weights->SetBinContent(bin, den == 0 ? 0 : num/den);
     }
   

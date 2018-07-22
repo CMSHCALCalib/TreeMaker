@@ -1,6 +1,42 @@
-#include "generateWeights.C"
+//c++ -o makePlots `root-config --cflags --ldflags --glibs` makePlots.C
+
+#include "TH1.h"
+#include "TF1.h"
+#include "TCanvas.h"
+#include "TProfile.h"
+#include "TTree.h"
+#include "TFile.h"
+#include "TChain.h"
+#include "TApplication.h"
+
+#include <utility>
+#include <string>
+#include <iostream>
+#include <fstream>
 
 std::map<int,std::string> subDetMap;
+
+TChain* loadChain(std::string fileList)
+{
+  TChain* chain = new TChain("recHitTree/RecHitTree","recHitTree/RecHitTree");
+
+  if(fileList.find(".root") != std::string::npos)
+    {
+      chain->Add(fileList.c_str());
+      std::cout << "+++ Added file: " << fileList << std::endl;
+    }
+  else
+    {
+      std::ifstream file(fileList);
+      std::string str;
+      while (std::getline(file, str))
+        {
+          chain->Add(str.c_str());
+	  std::cout << "+++ Added file: " << str << std::endl;
+        }
+    }
+  return chain;
+}
 
 struct TreeVars
 {  
@@ -80,9 +116,14 @@ std::map<std::string, TH1*> InitHistograms()
 
 
 
-void makePlots(std::string fileList, std::string puWeights = "none")
+int main(int argc, char** argv)
 {
   gROOT->SetBatch(kTRUE);
+
+  std::string fileList(argv[1]);
+  std::string puWeights = "none";
+  if(argc > 2)
+    puWeights = argv[2];
   
   TFile* f_weights = 0;
   TH1F* h_weights = 0;
@@ -116,7 +157,7 @@ void makePlots(std::string fileList, std::string puWeights = "none")
   int nProcessed = 0;
   for(int entry = 0; entry < nEntries; ++entry)
     {
-      if(entry % 10 == 0)
+      if(entry % 1000 == 0)
 	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
       chain -> GetEntry(entry);
 
@@ -153,5 +194,5 @@ void makePlots(std::string fileList, std::string puWeights = "none")
     itr.second->Write();
   
   outFile->Close();
-  return;
+  return 0;
 }

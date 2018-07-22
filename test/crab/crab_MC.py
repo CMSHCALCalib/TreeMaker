@@ -9,7 +9,7 @@ config.General.requestName = ''
 
 config.section_('JobType')
 config.JobType.psetName = '../recHitTree_cfg.py'
-config.JobType.pyCfgParams = ['inputType=data', 'year=2018', 'doReco=OFF', 'noiseFilter=OFF']
+config.JobType.pyCfgParams = ['inputType=MC', 'year=2018', 'doReco=OFF', 'noiseFilter=OFF']
 config.JobType.pluginName = 'Analysis'
 #config.JobType.outputFiles = [''] #use autocollection
 #config.JobType.maxJobRuntimeMin = 2750 #45 h
