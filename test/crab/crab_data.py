@@ -4,15 +4,16 @@ config = Configuration()
 config.section_('General')
 config.General.transferOutputs = True
 config.General.transferLogs = False
-config.General.workArea = 'crab3Submission_2207'
+config.General.workArea = 'crab3Submission_2207_2'
 config.General.requestName = ''
 
 config.section_('JobType')
 config.JobType.psetName = '../recHitTree_cfg.py'
+config.JobType.pyCfgParams = ['inputType=data', 'year=2018', 'doReco=ON', 'noiseFilter=ON']
 config.JobType.pluginName = 'Analysis'
 #config.JobType.outputFiles = [''] #use autocollection
-config.JobType.maxJobRuntimeMin = 2750 #45 h
-config.JobType.maxMemoryMB = 2500 #2.5 GB
+#config.JobType.maxJobRuntimeMin = 2750 #45 h
+#config.JobType.maxMemoryMB = 2500 #2.5 GB
 
 config.section_('Data')
 config.Data.inputDataset = ''
@@ -22,7 +23,7 @@ config.Data.publication = False
 config.Data.runRange = '319849'
 #config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt'
 #config.Data.lumiMask = 'MyCert.txt'
-config.Data.outLFNDirBase = '/store/group/dpg_hcal/comm_hcal/dataMC_2018/'
+config.Data.outLFNDirBase = '/store/group/dpg_hcal/comm_hcal/deguio/dataMC_2018/'
 config.Data.ignoreLocality = True
 
 config.section_('User')
