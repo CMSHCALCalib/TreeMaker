@@ -4,7 +4,7 @@ config = Configuration()
 config.section_('General')
 config.General.transferOutputs = True
 config.General.transferLogs = False
-config.General.workArea = 'crab3Submission_2207_2'
+config.General.workArea = 'crab3Submission_Data_2307'
 config.General.requestName = ''
 
 config.section_('JobType')
@@ -20,9 +20,9 @@ config.Data.inputDataset = ''
 config.Data.unitsPerJob = 2 #without '' since it must be an int
 config.Data.splitting = 'LumiBased'
 config.Data.publication = False
-config.Data.runRange = '319849'
+#config.Data.runRange = '319849'
 #config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt'
-#config.Data.lumiMask = 'MyCert.txt'
+config.Data.lumiMask = 'MyCert.txt'
 config.Data.outLFNDirBase = '/store/group/dpg_hcal/comm_hcal/deguio/dataMC_2018/'
 config.Data.ignoreLocality = True
 

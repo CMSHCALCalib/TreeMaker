@@ -4,7 +4,7 @@ config = Configuration()
 config.section_('General')
 config.General.transferOutputs = True
 config.General.transferLogs = False
-config.General.workArea = 'crab3Submission_2207_3'
+config.General.workArea = 'crab3Submission_2307'
 config.General.requestName = ''
 
 config.section_('JobType')
@@ -17,7 +17,8 @@ config.JobType.pluginName = 'Analysis'
 
 config.section_('Data')
 config.Data.inputDataset = ''
-config.Data.splitting = 'Automatic'
+config.Data.unitsPerJob = 2
+config.Data.splitting = 'FileBased'
 config.Data.publication = False
 config.Data.outLFNDirBase = '/store/group/dpg_hcal/comm_hcal/deguio/dataMC_2018/'
 config.Data.ignoreLocality = True

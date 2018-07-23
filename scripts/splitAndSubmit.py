@@ -59,6 +59,8 @@ njobs_list = []
 num_lines = sum(1 for line in open(opt.list, "r"))
 ins = open(opt.list, "r")
 
+isData = ('none' in opt.weights)
+
 ##loop over lists (one for datasets) to create splitted lists
 count = 0
 jobCount = 0
@@ -76,18 +78,20 @@ for line in  ins:
         inputlist = []
 
         os.system("cp "+opt.executable+" "+workingDir)
-        if(not 'none' in opt.weights):
+        if(not isData):
             os.system("cp "+opt.weights+" "+workingDir)
         
         os.system("echo cd "+pwd+" > launch.sh")
         os.system("echo 'eval `scramv1 runtime -sh`\n' >> launch.sh")
         os.system("echo cd - >> launch.sh")
 
-        if(not 'none' in opt.weights):
+        if(not isData):
             os.system("echo  "+workingDir+"/"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt "+workingDir+"/"+opt.weights+" >> launch.sh")
+            os.system("echo mv "+opt.output+"_MC.root "+workingDir+"/"+opt.output+"_MC_"+str(jobCount)+".root >> launch.sh")
         else:
             os.system("echo  "+workingDir+"/"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt >> launch.sh")
-        os.system("echo mv "+opt.output+"\* "+workingDir+" >> launch.sh")
+            os.system("echo mv "+opt.output+"_data.root "+workingDir+"/"+opt.output+"_data_"+str(jobCount)+".root >> launch.sh")
+
         os.system("chmod 755 launch.sh")
         os.system("mv launch.sh "+workingDir+"/"+str(jobCount))
         njobs_list.append("bsub -q "+opt.queue+" -o "+workingDir+"/"+str(jobCount)+"/log.out -e "+workingDir+"/"+str(jobCount)+"/log.err "+workingDir+"/"+str(jobCount)+"/launch.sh")

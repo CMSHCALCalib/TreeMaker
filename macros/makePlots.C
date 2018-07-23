@@ -14,7 +14,7 @@
 #include <iostream>
 #include <fstream>
 
-std::map<int,std::string> subDetMap;
+std::map<int,std::map<int,std::string>> subDetMap;
 
 TChain* loadChain(std::string fileList)
 {
@@ -93,22 +93,76 @@ std::map<std::string, TH1*> InitHistograms()
   // global plots
   std::string hName = "h_pileup";
   histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),100,0,100);
-  hName = "h_recHitIEta";
-  histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),84,-42,42);
-  // add axis name
+  histoMap[hName]->GetXaxis()->SetTitle("pileup");
 
-  // per-sub plots
-  subDetMap[1] = "HB";
-  subDetMap[2] = "HE";
-  subDetMap[4] = "HF";
-  for(auto& sub : subDetMap)
+  // per-sub and per-depth plots
+  for(int idepth = 1; idepth<8; ++idepth)
     {
-      hName = "h_recHitEn_"+sub.second;
-      histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
-      // add axis name
+      if(idepth < 3)
+	{
+	  subDetMap[idepth][1] = "HBP_d"+std::to_string(idepth);
+	  subDetMap[idepth][-1] = "HBM_d"+std::to_string(idepth);
+	  subDetMap[idepth][4] = "HFP_d"+std::to_string(idepth);
+	  subDetMap[idepth][-4] = "HFM_d"+std::to_string(idepth);
+	}
+      subDetMap[idepth][2] = "HEP_d"+std::to_string(idepth);
+      subDetMap[idepth][-2] = "HEM_d"+std::to_string(idepth);
+    }
+  
+  for(auto& subDepth : subDetMap)
+    {
+      hName = "h_recHitIEta_d"+std::to_string(subDepth.first);
+      histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),84,-42,42);
+      histoMap[hName]->GetXaxis()->SetTitle("recHitIEta");
+      
+      hName = "h_recHitEnVsIEta_d"+std::to_string(subDepth.first);
+      histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),84,-42,42);
+      histoMap[hName]->GetXaxis()->SetTitle("recHitIEta");
+      histoMap[hName]->GetYaxis()->SetTitle("recHitEn [GeV]");
 
-      hName = "h_recHitIPhi_"+sub.second;
-      histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),72,0,72);
+      for(auto& subDet : subDepth.second)
+        {
+	  hName = "h_recHitEn_"+subDet.second;
+	  histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitEn [GeV]");
+      
+	  hName = "h_recHitEnRAW_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitEnRAW [GeV]");
+          
+          hName = "h_recHitIPhi_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),72,0,72);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitIPhi");
+          
+          hName = "h_recHitNum_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),200,0,4000);
+          histoMap[hName]->GetXaxis()->SetTitle("number of recHits");
+          
+          hName = "h_recHitEnVsIPhi_"+subDet.second;
+          histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),72,0,72);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitIPhi");
+          histoMap[hName]->GetYaxis()->SetTitle("recHitEn [GeV]");
+          
+          hName = "h_recHitChi2_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),100,0,10);
+          histoMap[hName]->GetXaxis()->SetTitle("log(recHitChi2)");
+          
+          hName = "h_recHitTime_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),60,-30,30);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitTime [ns]");
+          
+          hName = "h_recHitMaxEn_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitMaxEn [GeV]");
+          
+          hName = "h_recHitMaxIEta_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),84,-42,42);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitMaxIEta");
+          
+          hName = "h_recHitMaxIPhi_"+subDet.second;
+          histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),72,0,72);
+          histoMap[hName]->GetXaxis()->SetTitle("recHitMaxIPhi");
+        }
     }
 
   return histoMap;
@@ -155,7 +209,7 @@ int main(int argc, char** argv)
 
   int nEntries = chain -> GetEntries();
   int nProcessed = 0;
-  for(int entry = 0; entry < nEntries; ++entry)
+  for(int entry = 0; entry < 1000; ++entry)
     {
       if(entry % 1000 == 0)
 	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
@@ -169,24 +223,73 @@ int main(int argc, char** argv)
       // fill histograms
       histoMap["h_pileup"]->Fill(tt.pileup,ww);
       
+      std::map<std::string,int> nRecHitsMap;
+      std::map<std::string,int> maxRecHitsEnMap;
+      std::map<std::string,int> maxRecHitsIEtaMap;
+      std::map<std::string,int> maxRecHitsIPhiMap;
+
       for (unsigned int rhItr = 0; rhItr<tt.recHitSub->size(); ++rhItr)
 	{
-	  std::string suffix = subDetMap[tt.recHitSub->at(rhItr)];
+	  // basic rechit selections
+	  // if(tt.recHitEn->at(rhItr) < )
+
+	  int side = (tt.recHitIEta->at(rhItr) < 0) ? -1 : 1;
+	  int depth = tt.recHitDepth->at(rhItr);
+	  std::string suffix = subDetMap[depth][side * tt.recHitSub->at(rhItr)];
 
 	  std::string hName = "h_recHitEn_"+suffix;
 	  histoMap[hName]->Fill(tt.recHitEn->at(rhItr),ww);
-	  hName = "h_recHitIEta";
+	  hName = "h_recHitEnRAW_"+suffix;
+	  histoMap[hName]->Fill(tt.recHitEnRAW->at(rhItr),ww);
+	  hName = "h_recHitIEta_d"+std::to_string(depth);
 	  histoMap[hName]->Fill(tt.recHitIEta->at(rhItr),ww);
 	  hName = "h_recHitIPhi_"+suffix;
 	  histoMap[hName]->Fill(tt.recHitIPhi->at(rhItr),ww);
+	  hName = "h_recHitEnVsIEta_d"+std::to_string(depth);
+	  histoMap[hName]->Fill(tt.recHitIEta->at(rhItr),tt.recHitEn->at(rhItr)*ww);
+	  hName = "h_recHitEnVsIPhi_"+suffix;
+	  histoMap[hName]->Fill(tt.recHitIPhi->at(rhItr),tt.recHitEn->at(rhItr)*ww);
+	  hName = "h_recHitChi2_"+suffix;
+	  histoMap[hName]->Fill(log(tt.recHitChi2->at(rhItr)),ww);
+	  hName = "h_recHitTime_"+suffix;
+	  histoMap[hName]->Fill(tt.recHitTime->at(rhItr),ww);
+
+	  if(maxRecHitsEnMap.find(suffix) == maxRecHitsEnMap.end())
+	    {
+	      maxRecHitsEnMap[suffix] = tt.recHitEn->at(rhItr);
+	      maxRecHitsIEtaMap[suffix] = tt.recHitIEta->at(rhItr);
+	      maxRecHitsIPhiMap[suffix] = tt.recHitIPhi->at(rhItr);
+	      nRecHitsMap[suffix] = 0;
+	    }
+	  else if(tt.recHitEn->at(rhItr) > maxRecHitsEnMap[suffix])
+	    {
+	      maxRecHitsEnMap[suffix] = tt.recHitEn->at(rhItr);
+	      maxRecHitsIEtaMap[suffix] = tt.recHitIEta->at(rhItr);
+	      maxRecHitsIPhiMap[suffix] = tt.recHitIPhi->at(rhItr);	      
+	    }
+	  ++nRecHitsMap[suffix];
 
 	}
 
 
+      for(auto& subDepth : subDetMap)
+	for(auto& subDet : subDepth.second)
+	  {
+	    std::string hName = "h_recHitNum_"+subDet.second;
+	    histoMap[hName]->Fill(nRecHitsMap[subDet.second],ww);
+	    
+	    hName = "h_recHitMaxEn_"+subDet.second;
+	    histoMap[hName]->Fill(maxRecHitsEnMap[subDet.second],ww);
+	    
+	    hName = "h_recHitMaxIEta_"+subDet.second;
+	    histoMap[hName]->Fill(maxRecHitsIEtaMap[subDet.second],ww);
+	    
+	    hName = "h_recHitMaxIPhi_"+subDet.second;
+	    histoMap[hName]->Fill(maxRecHitsIPhiMap[subDet.second],ww);
+	  }
+
     }//end event loop
   std::cout << std::endl;
-
-
 
 
   // write histos to file

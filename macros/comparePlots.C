@@ -1,4 +1,4 @@
-//simple macro to compare 2015 and 2016 data
+//simple macro to compare Data and MC data
 
 void loopdir(TFile* file, std::vector<TH1*>& histovec)
 {
@@ -12,12 +12,13 @@ void loopdir(TFile* file, std::vector<TH1*>& histovec)
   }
 }
 
-void set2015style(TH1* histo)
+void setDatastyle(TH1* histo)
 {
   histo->SetMarkerSize(0);  
+  histo->SetLineWidth(2);
 }
 
-void set2016style(TH1* histo)
+void setMCstyle(TH1* histo)
 {
   histo->SetLineColor(2);
   histo->SetMarkerColor(2);
@@ -40,34 +41,81 @@ void setGlobalStyle()
 
 
 
-void comparePlots(std::string plots2015, std::string plots2016)
+void comparePlots(std::string plotsData, std::string plotsMC)
 {
+  gROOT->SetBatch(kTRUE);
+
   setGlobalStyle();
-  int setLog[] = {1,1,0,0,1,1,0,0,0,0};
-  ADD SIMILAR FOR REBIN
+  int setLog[] = {0,                                           //pileup
+		  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //chi2
+		  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //enRaw
+		  1,1,1,1,1,1,1,	                       //enVsIeta
+		  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //enVsIphi
+		  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //en
+		  0,0,0,0,0,0,0,	                       //ieta
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //iphi
+                  1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //maxEn
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //maxEnIEta
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //maxEnIPhi
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //num
+                  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//time
+
+  int setXmax[] = {0,                                            //pileup
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //chi2
+		   300,300,300,300,500,500,500,500,500,500,500,500,500,500,500,500,500,500,1000,1000,1000,1000, //enRAW
+		   0,0,0,0,0,0,0,                                //enVsIeta
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //enVsIphi
+		   300,300,300,300,500,500,500,500,500,500,500,500,500,500,500,500,500,500,1000,1000,1000,1000, //en
+		   0,0,0,0,0,0,0,                                //ieta
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //iphi
+		   300,300,300,300,500,500,500,500,500,500,500,500,500,500,500,500,500,500,1000,1000,1000,1000, //maxEn
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //maxEnIEta
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //maxEnIPhi
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  //num
+		   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};//time
+
+  int scaleContent[] = {1,           //pileup
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //chi2
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //enRAW
+			0,0,0,0,0,0,0,                               //enVsIeta
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, //enVsIphi
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //en
+			1,1,1,1,1,1,1,                               //ieta
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //iphi
+		        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //maxEn
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //maxEnIEta
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //maxEnIPhi
+		        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, //num
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};//time
+
+  //ADD SIMILAR FOR REBIN/RANGE IF NEEDED
   
   //open files
-  TFile* f_plots2015 = TFile::Open(plots2015.c_str());
-  TFile* f_plots2016 = TFile::Open(plots2016.c_str());
+  TFile* f_plotsData = TFile::Open(plotsData.c_str());
+  TFile* f_plotsMC = TFile::Open(plotsMC.c_str());
 
-  std::vector<TH1*> h_2015;
-  std::vector<TH1*> h_2016;
+  std::vector<TH1*> h_Data;
+  std::vector<TH1*> h_MC;
 
-  loopdir(f_plots2015, h_2015);
-  loopdir(f_plots2016, h_2016);
+  loopdir(f_plotsData, h_Data);
+  loopdir(f_plotsMC, h_MC);
 
-  for(int itr=0; itr<h_2015.size(); ++itr)
+  //need to renormalize to the number of events
+  float mcScale = h_Data.at(0)->Integral() / h_MC.at(0)->Integral();
+  
+
+  for(int itr=0; itr<h_Data.size(); ++itr)
     {
-      std::cout << "histoName: " << h_2015.at(itr)->GetName() << std::endl;
+      std::cout << "histoName: " << h_Data.at(itr)->GetName() << std::endl;
 
-      set2015style(h_2015.at(itr));
-      set2016style(h_2016.at(itr));
+      setDatastyle(h_Data.at(itr));
+      setMCstyle(h_MC.at(itr));
 
       //legend
       TLegend* leg = new TLegend(0.82, 0.78, 1.03, 0.89);
       //leg->SetFillColor(kWhite);
-      leg->AddEntry(h_2015.at(itr),"2015 Data","L");
-      leg->AddEntry(h_2016.at(itr),"2016 Data","P");
+      leg->AddEntry(h_Data.at(itr),"Data","L");
+      leg->AddEntry(h_MC.at(itr),"MC","P");
 
       TCanvas* c1 = new TCanvas();
       c1 -> cd();
@@ -83,36 +131,46 @@ void comparePlots(std::string plots2015, std::string plots2016)
       p1 -> SetGridx();
       p1 -> SetGridy();
 
-      //scale and compute ratio
-      h_2015.at(itr)->Sumw2();
-      h_2016.at(itr)->Sumw2();
-      h_2015.at(itr)->Scale(h_2016.at(itr)->Integral()/h_2015.at(itr)->Integral());
+      //set specific axis range
+      if(setXmax[itr] != 0)
+	{
+	  h_Data.at(itr)->GetXaxis()->SetRangeUser(h_Data.at(itr)->GetXaxis()->GetBinLowEdge(1), setXmax[itr]);
+	  h_MC.at(itr)->GetXaxis()->SetRangeUser(h_MC.at(itr)->GetXaxis()->GetBinLowEdge(1), setXmax[itr]);
+	}
 
-      h_2015.at(itr)->Draw("HISTO,E");
-      h_2016.at(itr)->Draw("P,sames");
+
+      //scale and compute ratio
+      h_Data.at(itr)->Sumw2();
+      h_MC.at(itr)->Sumw2();
+      //scale to the same number of events
+      if(scaleContent[itr])
+	h_MC.at(itr)->Scale(mcScale);
+
+      h_Data.at(itr)->Draw("HISTO,E");
+      h_MC.at(itr)->Draw("P,sames");
       leg->Draw("same");
 
 
       TH1F* ratioHisto;
-      if(h_2015.at(itr)->GetXaxis()->GetXbins()->GetArray() != nullptr)
-	ratioHisto = new TH1F("tmp","tmp",h_2015.at(itr)->GetNbinsX(),h_2015.at(itr)->GetXaxis()->GetXbins()->GetArray());
+      if(h_Data.at(itr)->GetXaxis()->GetXbins()->GetArray() != nullptr)
+	ratioHisto = new TH1F("tmp","tmp",h_Data.at(itr)->GetNbinsX(),h_Data.at(itr)->GetXaxis()->GetXbins()->GetArray());
       else
-	ratioHisto = new TH1F("tmp","tmp",h_2015.at(itr)->GetNbinsX(),
-			                  h_2015.at(itr)->GetBinLowEdge(1),
-			                  h_2015.at(itr)->GetBinLowEdge(h_2015.at(itr)->GetNbinsX())+h_2015.at(itr)->GetBinWidth(1));
+	ratioHisto = new TH1F("tmp","tmp",h_Data.at(itr)->GetNbinsX(),
+			                  h_Data.at(itr)->GetBinLowEdge(1),
+			                  h_Data.at(itr)->GetBinLowEdge(h_Data.at(itr)->GetNbinsX())+h_Data.at(itr)->GetBinWidth(1));
       ratioHisto->Sumw2();
       
-      for(int bin = 1; bin <= h_2015.at(itr)->GetNbinsX(); ++bin)
+      for(int bin = 1; bin <= h_Data.at(itr)->GetNbinsX(); ++bin)
 	{
-	  if(h_2015.at(itr)->GetBinContent(bin) == 0. || h_2016.at(itr)->GetBinContent(bin) == 0.) continue;
+	  if(h_Data.at(itr)->GetBinContent(bin) == 0. || h_MC.at(itr)->GetBinContent(bin) == 0.) continue;
 
-	  float val2015 = h_2015.at(itr)->GetBinContent(bin);
-	  float val2016 = h_2016.at(itr)->GetBinContent(bin);
-	  float sigma2015 = h_2015.at(itr)->GetBinError(bin);
-	  float sigma2016 = h_2016.at(itr)->GetBinError(bin);
+	  float valData = h_Data.at(itr)->GetBinContent(bin);
+	  float valMC = h_MC.at(itr)->GetBinContent(bin);
+	  float sigmaData = h_Data.at(itr)->GetBinError(bin);
+	  float sigmaMC = h_MC.at(itr)->GetBinError(bin);
 
-	  ratioHisto -> SetBinContent(bin, val2015/val2016);
-	  ratioHisto -> SetBinError(bin, sqrt((sigma2015/val2016)*(sigma2015/val2016) + (val2015*sigma2016/val2016/val2016)*(val2015*sigma2016/val2016/val2016)));
+	  ratioHisto -> SetBinContent(bin, valData/valMC);
+	  ratioHisto -> SetBinError(bin, sqrt((sigmaData/valMC)*(sigmaData/valMC) + (valData*sigmaMC/valMC/valMC)*(valData*sigmaMC/valMC/valMC)));
 	}
       
       p2 -> cd();
@@ -122,6 +180,10 @@ void comparePlots(std::string plots2015, std::string plots2016)
       // For the axis labels:
       tdrStyle->SetLabelSize(0.1, "XYZ");
   
+      //set specific axis range
+      if(setXmax[itr] != 0)
+	ratioHisto->GetXaxis()->SetRangeUser(ratioHisto->GetXaxis()->GetBinLowEdge(1), setXmax[itr]);
+
       ratioHisto -> GetYaxis() -> SetRangeUser(0., 2.);
       ratioHisto -> DrawCopy("P");
       
@@ -129,6 +191,9 @@ void comparePlots(std::string plots2015, std::string plots2016)
       line -> SetLineWidth(2);
       line -> SetLineColor(kRed);
       line -> Draw("same");
+
+      std::string picName = h_Data.at(itr)->GetName();
+      c1->Print(("plots/"+picName+".pdf").c_str());
 
       delete ratioHisto;
     }
