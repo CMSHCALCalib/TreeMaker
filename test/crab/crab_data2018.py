@@ -4,12 +4,12 @@ config = Configuration()
 config.section_('General')
 config.General.transferOutputs = True
 config.General.transferLogs = False
-config.General.workArea = 'crab3Submission_2307'
+config.General.workArea = 'crab3Submission_Data_3007'
 config.General.requestName = ''
 
 config.section_('JobType')
 config.JobType.psetName = '../recHitTree_cfg.py'
-config.JobType.pyCfgParams = ['inputType=MC', 'year=2018', 'doReco=OFF', 'noiseFilter=OFF']
+config.JobType.pyCfgParams = ['inputType=data', 'year=2018', 'doReco=ON', 'noiseFilter=ON']
 config.JobType.pluginName = 'Analysis'
 #config.JobType.outputFiles = [''] #use autocollection
 #config.JobType.maxJobRuntimeMin = 2750 #45 h
@@ -17,9 +17,12 @@ config.JobType.pluginName = 'Analysis'
 
 config.section_('Data')
 config.Data.inputDataset = ''
-config.Data.unitsPerJob = 2
-config.Data.splitting = 'FileBased'
+config.Data.unitsPerJob = 4 #without '' since it must be an int
+config.Data.splitting = 'LumiBased'
 config.Data.publication = False
+#config.Data.runRange = '317626-317696'
+#config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-318876_13TeV_PromptReco_Collisions18_JSON.txt'
+config.Data.lumiMask = 'MyCert.txt'
 config.Data.outLFNDirBase = '/store/group/dpg_hcal/comm_hcal/deguio/dataMC_2018/'
 config.Data.ignoreLocality = True
 
@@ -40,11 +43,11 @@ if __name__ == '__main__':
         
     #########From now on that's what users should modify: this is the a-la-CRAB2 configuration part.
 
-    requestNameList = ['SingleNeutrino_RunIISpring18DRPremix-NZS_100X_upgrade2018_realistic_v10-v2_GEN-SIM-RECO'
+    requestNameList = ['ZeroBias_Run2018B-v1_RAW'
                        ]
 
 
-    inputDatasetList = ['/SingleNeutrino/RunIISpring18DRPremix-NZS_100X_upgrade2018_realistic_v10-v2/GEN-SIM-RECO'
+    inputDatasetList = ['/ZeroBias/Run2018B-v1/RAW'
                         ]
 
     

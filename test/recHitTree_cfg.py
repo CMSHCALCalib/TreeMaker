@@ -52,7 +52,7 @@ if options.year == 2017:
         infile = fileList
 
     if options.inputType == 'MC':
-        GT = '100X_mc2017_realistic_v1'
+        GT = '92X_upgrade2017_realistic_v10'
         from CMSHCALCalib.TreeMaker.MCFileList2017 import fileList
         infile = fileList
 
@@ -91,20 +91,21 @@ process.GlobalTag.globaltag = GT
 #process.es_prefer = cms.ESPrefer('HcalTextCalibrations', 'es_ascii')
 
 #-----------
-#process.load("CondCore.DBCommon.CondDBSetup_cfi")
-#process.es_pool = cms.ESSource("PoolDBESSource",
-#                              process.CondDBSetup,
-#                              timetype = cms.string('runnumber'),
-#                              toGet = cms.VPSet(
-#                                     cms.PSet(record = cms.string("HcalElectronicsMapRcd"),
-#                                     tag = cms.string("HCALemap_2018_data_MWGR1test")
-##                                     tag = cms.string("HcalElectronicsMap_2017plan1_v3.0_mc")
-#                                     )
-#                             ),
-# connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS'),
-# authenticationMethod = cms.untracked.uint32(0)
-#)
-#process.es_prefer_es_pool = cms.ESPrefer( "PoolDBESSource", "es_pool" )
+# get latest response correction (mostly energy scale from Isotrack)
+if options.inputType == 'data' and options.year == 2018:
+    process.load("CondCore.DBCommon.CondDBSetup_cfi")
+    process.es_pool = cms.ESSource("PoolDBESSource",
+                                   process.CondDBSetup,
+                                   timetype = cms.string('runnumber'),
+                                   toGet = cms.VPSet(
+                                       cms.PSet(record = cms.string("HcalRespCorrsRcd"),
+                                                tag = cms.string("HcalRespCorrs_2018_v3.1_data")
+                                                )
+                                       ),
+                                   connect = cms.string('frontier://FrontierProd/CMS_CONDITIONS'),
+                                   authenticationMethod = cms.untracked.uint32(0)
+                                   )
+    process.es_prefer_es_pool = cms.ESPrefer( "PoolDBESSource", "es_pool" )
 
 
 #-----------
@@ -188,12 +189,26 @@ process.ntuple = cms.Path(
 
 process.schedule = cms.Schedule(process.ntuple) #default in case doReco==OFF
 
+if options.year == 2017 and options.inputType == 'MC':
+    process.recHitTree.HBHERecHitCollectionLabel  = cms.untracked.InputTag("hbhereco")
+    process.hcalnoise.recHitCollName = cms.string("hbhereco")
+
 if options.doReco == "ON" and options.noiseFilter == "ON":
+    if options.year == 2017:
+        process.recoPath.insert(100,process.hbheplan1)
+        process.recHitTree.HBHERecHitCollectionLabel  = cms.untracked.InputTag("hbheplan1")
+        process.hcalnoise.recHitCollName = cms.string("hbheplan1")
+
     process.recoPath.insert(100,process.hcalnoise*process.HBHENoiseFilterResultProducer*process.ApplyBaselineHBHENoiseFilter)
     process.schedule.insert(0,process.recoPath)
     process.schedule.insert(0,process.digiPath)
 
 if options.doReco == "ON" and options.noiseFilter == "OFF":
-        process.schedule.insert(0,process.recoPath)
-        process.schedule.insert(0,process.digiPath)
+    if options.year == 2017:
+        process.recoPath.insert(100,process.hbheplan1)
+        process.recHitTree.HBHERecHitCollectionLabel  = cms.untracked.InputTag("hbheplan1")
+        process.hcalnoise.recHitCollName = cms.string("hbheplan1")
+
+    process.schedule.insert(0,process.recoPath)
+    process.schedule.insert(0,process.digiPath)
 

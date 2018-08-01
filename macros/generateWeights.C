@@ -27,30 +27,34 @@ TChain* loadChain(std::string fileList)
 void generateWeights(std::string dataFileList, std::string mcFileList)
 {
   gROOT->SetBatch(kTRUE);
-  TFile* outFile = new TFile("pileUpWeights.root","RECREATE");
+  TFile* outFile = new TFile("pileUpWeights_calc.root","RECREATE");
   
-  TTree* dataTree = loadChain(dataFileList);
+  TFile* f_pileupProfile = TFile::Open(dataFileList.c_str());
   TTree* mcTree = loadChain(mcFileList);
+  
 
   //book histo
-  TH1F* h_puData = new TH1F("h_puData","h_puData",100,0,100);
+  TH1F* h_puData = (TH1F*)f_pileupProfile->Get("pileup");
   TH1F* h_puMC = new TH1F("h_puMC","h_puMC",100,0,100);
 
   TH1F* h_weights = new TH1F("h_weights","h_weights",100,0,100);
 
-  dataTree->Draw("pileup >> h_puData","","");
+  //  dataTree->Draw("pileup >> h_puData","","");
   mcTree->Draw("pileup >> h_puMC","","");
 
-  h_puData->Scale(1/h_puData->GetEntries());
-  h_puMC->Scale(1/h_puMC->GetEntries());
+  h_puData->Scale(1/h_puData->Integral());
+  h_puMC->Scale(1/h_puMC->Integral());
 
   for(unsigned int bin=1; bin<h_puData->GetNbinsX(); ++bin)
     {
       float num = h_puData->GetBinContent(bin);
       float den = h_puMC->GetBinContent(bin);
       h_weights->SetBinContent(bin, den == 0 ? 0 : num/den);
+
+      std::cout << bin << " data = " << num << " MC = " << den << std::endl;
     }
   
+  outFile->cd();
   h_weights->Write();
   h_puData->Write();
   h_puMC->Write();

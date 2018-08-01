@@ -20,7 +20,9 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/PluginManager/interface/ModuleDef.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 
+#include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/Scalers/interface/LumiScalers.h"
@@ -65,6 +67,9 @@ private:
   virtual void beginJob() override;
   virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
   virtual void endJob() override;
+
+  void fillHltResults(const edm::Handle<edm::TriggerResults> &, 
+		      const edm::TriggerNames &);
   
   // ----------member data ---------------------------
   int isData;
@@ -74,6 +79,10 @@ private:
 
   edm::EDGetTokenT<LumiScalersCollection> tok_scal_;
   edm::EDGetTokenT<std::vector<PileupSummaryInfo>> tok_puinfo_;
+
+  edm::EDGetTokenT<edm::TriggerResults>   tok_triggerResults_;
+  std::vector<std::string> hltPaths_;
+
 
   TTree *tt;
 
@@ -93,8 +102,27 @@ private:
   std::vector<int>*   recHitFlags;
   std::vector<int>*   recHitSub;
 
-
+  std::vector<int>* hltAccept;
+  std::vector<int>* hltWasrun;
+  std::vector<std::string>* hltNames;
 };
+
+
+void RecHitTree::fillHltResults(const edm::Handle<edm::TriggerResults>   & triggerResults, 
+				const edm::TriggerNames                  & triggerNames  )
+{
+  
+  for (unsigned int itrig=0; itrig < triggerNames.size(); ++itrig) 
+    for (unsigned int name=0; name < hltPaths_.size(); ++name)
+      if(triggerNames.triggerName(itrig).find(hltPaths_[name]) != std::string::npos)
+	{
+	  hltNames->push_back(triggerNames.triggerName(itrig));
+	  hltAccept->push_back(triggerResults->accept(itrig));
+	  hltWasrun->push_back(triggerResults->wasrun(itrig));
+	  break;
+	}
+}
+
 
 //
 // constructors and destructor
@@ -109,6 +137,10 @@ RecHitTree::RecHitTree(const edm::ParameterSet& iConfig)
   //  tok_calo_ = consumes<CaloTowerCollection>(iConfig.getUntrackedParameter<edm::InputTag>("CaloTowerCollectionLabel"));
   tok_scal_  = consumes<LumiScalersCollection>(iConfig.getUntrackedParameter<edm::InputTag>("LumiScalersCollectionLabel"));
   tok_puinfo_= consumes<std::vector<PileupSummaryInfo>>(iConfig.getUntrackedParameter<edm::InputTag>("PileUpInfoLabel"));
+  tok_triggerResults_ = consumes<edm::TriggerResults>(iConfig.getUntrackedParameter<edm::InputTag>("triggerResults"));
+  hltPaths_           = iConfig.getUntrackedParameter<std::vector<std::string> >("hltPaths");
+
+
   
   //Now we use the modification so that we can use the TFileService
   edm::Service<TFileService> fs;
@@ -130,6 +162,9 @@ RecHitTree::RecHitTree(const edm::ParameterSet& iConfig)
   recHitTime = new std::vector<float>;
   recHitFlags = new std::vector<int>;
   recHitSub = new std::vector<int>;
+  hltNames = new std::vector<std::string>;
+  hltAccept = new std::vector<int>;
+  hltWasrun = new std::vector<int>;
   tt->Branch("recHitEn","std::vector<float>", &recHitEn);
   tt->Branch("recHitEaux","std::vector<float>", &recHitEaux);
   tt->Branch("recHitChi2","std::vector<float>", &recHitChi2);
@@ -140,7 +175,9 @@ RecHitTree::RecHitTree(const edm::ParameterSet& iConfig)
   tt->Branch("recHitTime","std::vector<float>", &recHitTime);
   tt->Branch("recHitFlags","std::vector<int>", &recHitFlags);
   tt->Branch("recHitSub","std::vector<int>", &recHitSub);
-
+  tt->Branch("hltNames",  "std::vector<std::string>", &hltNames);
+  tt->Branch("hltAccept", "std::vector<int>", &hltAccept);
+  tt->Branch("hltWasrun", "std::vector<int>", &hltWasrun);
 }
 
 
@@ -163,8 +200,20 @@ RecHitTree::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    using namespace edm;
    using namespace reco;
 
-
-   
+   //clear vectors
+   recHitEn->clear();
+   recHitEaux->clear();
+   recHitChi2->clear();
+   recHitEnRAW->clear();
+   recHitIEta->clear();
+   recHitIPhi->clear();
+   recHitDepth->clear();
+   recHitTime->clear();
+   recHitFlags->clear();
+   recHitSub->clear();
+   hltNames->clear();
+   hltAccept->clear();
+   hltWasrun->clear();   
 
    // HCAL channel status map ****************************************
    
@@ -184,6 +233,13 @@ RecHitTree::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    event = iEvent.id().event();
 
 
+   //fill HLT results
+   edm::Handle<edm::TriggerResults>   triggerResults;
+   iEvent.getByToken(tok_triggerResults_, triggerResults);
+   edm::TriggerNames triggerNames = iEvent.triggerNames(*triggerResults);
+   fillHltResults(triggerResults,triggerNames); 
+
+
    // Access PU info
    if(isData)
      {
@@ -197,21 +253,12 @@ RecHitTree::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        iEvent.getByToken(tok_puinfo_, pucoll);
        for (auto const& pu_info : *pucoll.product()) {
 	 if (pu_info.getBunchCrossing() == 0) { //in-time PU
-	   pileup = pu_info.getPU_NumInteractions();
+	   pileup = pu_info.getTrueNumInteractions();
+	   //pileup = pu_info.getPU_NumInteractions();
 	 }
        }
      }
 
-   recHitEn->clear();
-   recHitEaux->clear();
-   recHitChi2->clear();
-   recHitEnRAW->clear();
-   recHitIEta->clear();
-   recHitIPhi->clear();
-   recHitDepth->clear();
-   recHitTime->clear();
-   recHitFlags->clear();
-   recHitSub->clear();
 
 
    // CaloTowers
