@@ -4,7 +4,7 @@ config = Configuration()
 config.section_('General')
 config.General.transferOutputs = True
 config.General.transferLogs = False
-config.General.workArea = 'crab3Submission_Data_0108'
+config.General.workArea = 'crab3Submission_Data_0208'
 config.General.requestName = ''
 
 config.section_('JobType')

@@ -177,6 +177,7 @@ process.noiseFilter = cms.Path(
 )
 
 process.recoPath = cms.Path(
+    #hcalLocalRecoSequenc
     process.horeco
     *process.hfprereco
     *process.hfreco
@@ -195,6 +196,8 @@ if options.year == 2017 and options.inputType == 'MC':
 
 if options.doReco == "ON" and options.noiseFilter == "ON":
     if options.year == 2017:
+        process.hbheprereco.algorithm.useM2 = cms.bool(True)
+        process.hbheprereco.algorithm.useMahi = cms.bool(False)
         process.recoPath.insert(100,process.hbheplan1)
         process.recHitTree.HBHERecHitCollectionLabel  = cms.untracked.InputTag("hbheplan1")
         process.hcalnoise.recHitCollName = cms.string("hbheplan1")
@@ -205,6 +208,8 @@ if options.doReco == "ON" and options.noiseFilter == "ON":
 
 if options.doReco == "ON" and options.noiseFilter == "OFF":
     if options.year == 2017:
+        process.hbheprereco.algorithm.useM2 = cms.bool(True)
+        process.hbheprereco.algorithm.useMahi = cms.bool(False)
         process.recoPath.insert(100,process.hbheplan1)
         process.recHitTree.HBHERecHitCollectionLabel  = cms.untracked.InputTag("hbheplan1")
         process.hcalnoise.recHitCollName = cms.string("hbheplan1")

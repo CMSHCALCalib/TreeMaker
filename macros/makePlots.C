@@ -1,4 +1,4 @@
-//c++ -o makePlots `root-config --cflags --ldflags --glibs` makePlots.C
+//c++ -I/cvmfs/cms.cern.ch/slc6_amd64_gcc700/external/boost/1.63.0-omkpbe4/include -o makePlots `root-config --cflags --ldflags --glibs` makePlots.C
 
 #include "TH1.h"
 #include "TF1.h"
@@ -14,7 +14,10 @@
 #include <iostream>
 #include <fstream>
 
-std::map<int,std::map<int,std::string>> subDetMap;
+#include "./puScripts/LumiInfoProvider.h"
+
+
+std::unordered_map<int,std::unordered_map<int,std::string>> subDetMap;
 std::vector<int> puVector{0,20,30,40,50,100};
 
 TChain* loadChain(std::string fileList)
@@ -87,9 +90,9 @@ void InitTreeVars(TTree* chain, TreeVars& tt)
 }
 
 
-std::map<std::string, TH1*> InitHistograms(TFile* outFile)
+std::unordered_map<std::string, TH1*> InitHistograms(TFile* outFile)
 {
-  std::map<std::string, TH1*> histoMap;
+  std::unordered_map<std::string, TH1*> histoMap;
 
   // prepare map for per-sub and per-depth plots
   for(int idepth = 1; idepth<8; ++idepth)
@@ -237,26 +240,33 @@ int main(int argc, char** argv)
 
   // book histos
   auto histoMap = InitHistograms(outFile);
-
+  // init lumi provider
+  LumiInfoProvider lumiInfoProvider("/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/pileup_latest.txt");
 
   int nEntries = chain -> GetEntries();
   int nProcessed = 0;
-  for(int entry = 0; entry < 500; ++entry)
+  for(int entry = 0; entry < nEntries; ++entry)
     {
       if(entry % 1000 == 0)
 	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
       chain -> GetEntry(entry);
 
       // get PU weights
+      int truePU = -1;
       float ww = 1;
       if (isData == false)
-	ww = h_weights->GetBinContent(h_weights->FindBin(tt.pileup));
+	{
+	  ww = h_weights->GetBinContent(h_weights->FindBin(tt.pileup));
+	  truePU = tt.pileup;
+	}
+      else
+	truePU = lumiInfoProvider.getNrExptPUInt(tt.run,tt.lumi);
       
       // fill histograms
       int puBinMin = -1;
       int puBinMax = -1;
       for(unsigned int puBin = 1; puBin<puVector.size(); ++puBin)
-	if(tt.pileup < puVector[puBin])
+	if(truePU < puVector[puBin])
 	  {
 	    puBinMin = puVector[puBin-1];
 	    puBinMax = puVector[puBin];
@@ -265,15 +275,15 @@ int main(int argc, char** argv)
       std::string puSuffix = "_pu"+std::to_string(puBinMin)+"-"+std::to_string(puBinMax);
 
       std::string hName = "h_pileup";
-      histoMap[hName]->Fill(tt.pileup,ww);
+      histoMap[hName]->Fill(truePU,ww);
       hName = "h_pileup"+puSuffix;
-      histoMap[hName]->Fill(tt.pileup,ww);
+      histoMap[hName]->Fill(truePU,ww);
       
       
-      std::map<std::string,int> nRecHitsMap;
-      std::map<std::string,int> maxRecHitsEnMap;
-      std::map<std::string,int> maxRecHitsIEtaMap;
-      std::map<std::string,int> maxRecHitsIPhiMap;
+      std::unordered_map<std::string,int> nRecHitsMap;
+      std::unordered_map<std::string,int> maxRecHitsEnMap;
+      std::unordered_map<std::string,int> maxRecHitsIEtaMap;
+      std::unordered_map<std::string,int> maxRecHitsIPhiMap;
 
       for (unsigned int rhItr = 0; rhItr<tt.recHitSub->size(); ++rhItr)
 	{
@@ -283,6 +293,7 @@ int main(int argc, char** argv)
 	    continue;
 	  if(tt.recHitSub->at(rhItr) == 2 && //HE
 	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? 0.2 : 0.1))
+	    //tt.recHitEn->at(rhItr) < 0.8)
 	    continue;
 
 	  int side = (tt.recHitIEta->at(rhItr) < 0) ? -1 : 1;
@@ -292,7 +303,7 @@ int main(int argc, char** argv)
 	  hName = "h_recHitEn_"+detSuffix+puSuffix;
 	  histoMap[hName]->Fill(tt.recHitEn->at(rhItr),ww);
 	  hName = "h_recHitEnVsPileup_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.pileup,tt.recHitEn->at(rhItr)*ww);
+	  histoMap[hName]->Fill(truePU,tt.recHitEn->at(rhItr)*ww);
 	  hName = "h_recHitEnRAW_"+detSuffix+puSuffix;
 	  histoMap[hName]->Fill(tt.recHitEnRAW->at(rhItr),ww);
 	  hName = "h_recHitIEta_d"+std::to_string(depth)+puSuffix;
@@ -332,7 +343,7 @@ int main(int argc, char** argv)
        	    histoMap[hName]->Fill(nRecHitsMap[suffix],ww);
 
        	    hName = "h_recHitNumVsPileup_"+suffix;
-       	    histoMap[hName]->Fill(tt.pileup,nRecHitsMap[suffix]*ww);
+       	    histoMap[hName]->Fill(truePU,nRecHitsMap[suffix]*ww);
           
        	    hName = "h_recHitMaxEn_"+suffix;
        	    histoMap[hName]->Fill(maxRecHitsEnMap[suffix],ww);
