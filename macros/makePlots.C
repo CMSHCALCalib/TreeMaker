@@ -14,11 +14,11 @@
 #include <iostream>
 #include <fstream>
 
-#include "./puScripts/LumiInfoProvider.h"
+#include "./Utils/LumiInfoProvider.h"
+#include "./Utils/HistoFactory.h"
 
-
-std::unordered_map<int,std::unordered_map<int,std::string>> subDetMap;
 std::vector<int> puVector{0,20,30,40,50,100};
+std::vector<int> ietaVector{16,24,29};
 
 TChain* loadChain(std::string fileList)
 {
@@ -90,120 +90,6 @@ void InitTreeVars(TTree* chain, TreeVars& tt)
 }
 
 
-std::unordered_map<std::string, TH1*> InitHistograms(TFile* outFile)
-{
-  std::unordered_map<std::string, TH1*> histoMap;
-
-  // prepare map for per-sub and per-depth plots
-  for(int idepth = 1; idepth<8; ++idepth)
-    {
-      if(idepth < 3)
-	{
-	  subDetMap[idepth][1] = "HBP_d"+std::to_string(idepth);
-	  subDetMap[idepth][-1] = "HBM_d"+std::to_string(idepth);
-	  subDetMap[idepth][4] = "HFP_d"+std::to_string(idepth);
-	  subDetMap[idepth][-4] = "HFM_d"+std::to_string(idepth);
-	}
-      subDetMap[idepth][2] = "HEP_d"+std::to_string(idepth);
-      subDetMap[idepth][-2] = "HEM_d"+std::to_string(idepth);
-    }
-
-  // global plots
-  std::string hName = "h_pileup";
-  histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),100,0,100);
-  histoMap[hName]->GetXaxis()->SetTitle("pileup");
-
-
-  // loop over PU bins
-  for(unsigned int puBin = 1; puBin<puVector.size(); ++puBin)
-    {
-      std::string suffix = "pu"+std::to_string(puVector[puBin-1])+"-"+std::to_string(puVector[puBin]);
-      TDirectory* dir = outFile->mkdir(suffix.c_str());
-      dir->cd();
-
-      std::string hName = "h_pileup_"+suffix;
-      histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),100,0,100);
-      histoMap[hName]->GetXaxis()->SetTitle("pileup");
-
-
-      // loop over depths
-      for(auto& subDepth : subDetMap)
-	{
-         //depth+PU suffix
-         std::string suffix = std::to_string(subDepth.first)+"_pu"+std::to_string(puVector[puBin-1])+"-"+std::to_string(puVector[puBin]);
-    	 
-         hName = "h_recHitIEta_d"+suffix;
-         histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),84,-42,42);
-         histoMap[hName]->GetXaxis()->SetTitle("recHitIEta");
-         
-         hName = "h_recHitEnVsIEta_d"+suffix;
-         histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),84,-42,42);
-         histoMap[hName]->GetXaxis()->SetTitle("recHitIEta");
-         histoMap[hName]->GetYaxis()->SetTitle("recHitEn [GeV]");
-    	 
-	 // loop over subdet regions
-         for(auto& subDet : subDepth.second)
-           {
-	     //depth+subdepth+pu suffix
-	     suffix = subDet.second+"_pu"+std::to_string(puVector[puBin-1])+"-"+std::to_string(puVector[puBin]);
-	     
-	     hName = "h_recHitEn_"+suffix;
-	     histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
-	     histoMap[hName]->GetXaxis()->SetTitle("recHitEn [GeV]");
-
-	     hName = "h_recHitEnVsPileup_"+suffix;
-	     histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),100,0,100);
-	     histoMap[hName]->GetYaxis()->SetTitle("recHitEn [GeV]");    
-	     histoMap[hName]->GetXaxis()->SetTitle("pileup");    
-
-	     hName = "h_recHitEnRAW_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitEnRAW [GeV]");
-             
-             hName = "h_recHitIPhi_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),72,0,72);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitIPhi");
-             
-             hName = "h_recHitNum_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),400,0,4000);
-             histoMap[hName]->GetXaxis()->SetTitle("number of recHits");
-
-             hName = "h_recHitNumVsPileup_"+suffix;
-             histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),100,0,100);
-             histoMap[hName]->GetYaxis()->SetTitle("number of recHits");
-             histoMap[hName]->GetXaxis()->SetTitle("pileup");
-             
-             hName = "h_recHitEnVsIPhi_"+suffix;
-             histoMap[hName] = new TProfile(hName.c_str(),hName.c_str(),72,0,72);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitIPhi");
-             histoMap[hName]->GetYaxis()->SetTitle("recHitEn [GeV]");
-             
-             hName = "h_recHitChi2_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),100,0,10);
-             histoMap[hName]->GetXaxis()->SetTitle("log(recHitChi2)");
-             
-             hName = "h_recHitTime_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),60,-30,30);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitTime [ns]");
-             
-             hName = "h_recHitMaxEn_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),2500,0,5000);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitMaxEn [GeV]");
-             
-             hName = "h_recHitMaxIEta_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),84,-42,42);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitMaxIEta");
-             
-             hName = "h_recHitMaxIPhi_"+suffix;
-             histoMap[hName] = new TH1F(hName.c_str(),hName.c_str(),72,0,72);
-             histoMap[hName]->GetXaxis()->SetTitle("recHitMaxIPhi");
-           }
-	}
-    }
-  return histoMap;
-}
-
-
 
 int main(int argc, char** argv)
 {
@@ -238,126 +124,127 @@ int main(int argc, char** argv)
   TreeVars tt;
   InitTreeVars(chain,tt); 
 
-  // book histos
-  auto histoMap = InitHistograms(outFile);
   // init lumi provider
   LumiInfoProvider lumiInfoProvider("/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/pileup_latest.txt");
 
+
+
+  //book histos
+  HistoFactory myHistos(puVector,ietaVector,outFile);
+
+  myHistos.initHisto("h_pileupGlo","Global", 100,0,100,"pileup");
+  myHistos.initHisto("h_pileupBin","Pu",100,0,100,"pileup");
+
+  myHistos.initHisto("h_recHitIEta",    "DepthPu",84,-42,42,"recHitIEta");
+  myHistos.initHisto("h_recHitEnVsIEta","DepthPu",       84,-42,42,"recHitIEta","recHitEn [GeV]");
+  myHistos.initHisto("h_recHitIPhi",   "SubDepthIetaPu",72,0,72,"recHitIPhi");
+  myHistos.initHisto("h_recHitEnVsIPhi","SubDepthIetaPu",72,0,72,"recHitIPhi","recHitEn [GeV]");
+  
+  myHistos.initHisto("h_recHitEn",   "SubDepthIetaPu",2500,0,5000,"recHitEn [GeV]");
+  myHistos.initHisto("h_recHitEnTmp", "SubDepthIeta",2500,0,5000,"recHitEn [GeV]");
+  myHistos.initHisto("h_recHitEnRAW","SubDepthIetaPu",2500,0,5000,"recHitEnRAW [GeV]");
+  myHistos.initHisto("h_recHitEnVsPu","SubDepthIeta",2500,0,5000,"recHitEn [GeV]","pileup");
+
+  myHistos.initHisto("h_recHitNum","SubDepthIetaPu",400,0,4000,"number of recHits");
+  myHistos.initHisto("h_recHitNumVsPu","SubDepthIeta",400,0,4000,"number of recHits","pileup");
+
+  myHistos.initHisto("h_recHitChi2","SubDepthIetaPu",100,0,10,"log(recHitChi2)");
+  myHistos.initHisto("h_recHitTime","SubDepthIetaPu",60,-30,30,"recHitTime [ns]");
+  myHistos.initHisto("h_recHitMaxEn","SubDepthIetaPu",2500,0,5000,"recHitMaxEn [GeV]");
+
+
+  
+
+  //loop over events
   int nEntries = chain -> GetEntries();
-  int nProcessed = 0;
+  if(argc > 3)
+    nEntries = atoi(argv[3]);
+
   for(int entry = 0; entry < nEntries; ++entry)
     {
       if(entry % 1000 == 0)
-	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
+   	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
       chain -> GetEntry(entry);
-
+      
       // get PU weights
       int truePU = -1;
       float ww = 1;
       if (isData == false)
-	{
-	  ww = h_weights->GetBinContent(h_weights->FindBin(tt.pileup));
-	  truePU = tt.pileup;
-	}
+   	{
+   	  ww = h_weights->GetBinContent(h_weights->FindBin(tt.pileup));
+   	  truePU = tt.pileup;
+   	}
       else
-	truePU = lumiInfoProvider.getNrExptPUInt(tt.run,tt.lumi);
-      
-      // fill histograms
-      int puBinMin = -1;
-      int puBinMax = -1;
-      for(unsigned int puBin = 1; puBin<puVector.size(); ++puBin)
-	if(truePU < puVector[puBin])
-	  {
-	    puBinMin = puVector[puBin-1];
-	    puBinMax = puVector[puBin];
-	    break;
-	  }
-      std::string puSuffix = "_pu"+std::to_string(puBinMin)+"-"+std::to_string(puBinMax);
-
-      std::string hName = "h_pileup";
-      histoMap[hName]->Fill(truePU,ww);
-      hName = "h_pileup"+puSuffix;
-      histoMap[hName]->Fill(truePU,ww);
-      
+   	truePU = lumiInfoProvider.getNrExptPUInt(tt.run,tt.lumi);
       
       std::unordered_map<std::string,int> nRecHitsMap;
       std::unordered_map<std::string,int> maxRecHitsEnMap;
       std::unordered_map<std::string,int> maxRecHitsIEtaMap;
       std::unordered_map<std::string,int> maxRecHitsIPhiMap;
 
+
+      // fill global histograms
+      myHistos.fill("h_pileupGlo",-1,-1,-1,-1, truePU, -1 ,ww);
+      myHistos.fill("h_pileupBin",truePU,-1,-1,-1, truePU, -1 ,ww);
+      
+
+      // loop over rechits
       for (unsigned int rhItr = 0; rhItr<tt.recHitSub->size(); ++rhItr)
-	{
-	  // basic rechit selections
-	  if(tt.recHitSub->at(rhItr) == 1 && //HB
-	     tt.recHitEn->at(rhItr) < 0.8)
-	    continue;
-	  if(tt.recHitSub->at(rhItr) == 2 && //HE
-	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? 0.2 : 0.1))
-	    //tt.recHitEn->at(rhItr) < 0.8)
-	    continue;
+   	{
+   	  // basic rechit selections
+   	  if(tt.recHitSub->at(rhItr) == 1 && //HB
+   	     tt.recHitEn->at(rhItr) < 0.8)
+   	    continue;
+   	  if(tt.recHitSub->at(rhItr) == 2 && //HE
+   	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? 0.2 : 0.1))
+   	    //tt.recHitEn->at(rhItr) < 0.8)
+   	    continue;
 
-	  int side = (tt.recHitIEta->at(rhItr) < 0) ? -1 : 1;
+	  float en = tt.recHitEn->at(rhItr);
+	  float enRAW = tt.recHitEnRAW->at(rhItr);
+	  float time = tt.recHitTime->at(rhItr);
+	  float chi2 = tt.recHitChi2->at(rhItr);
+
+	  int ieta = tt.recHitIEta->at(rhItr);
+	  int iphi = tt.recHitIPhi->at(rhItr);
 	  int depth = tt.recHitDepth->at(rhItr);
-	  std::string detSuffix = subDetMap[depth][side * tt.recHitSub->at(rhItr)];
 
-	  hName = "h_recHitEn_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitEn->at(rhItr),ww);
-	  hName = "h_recHitEnVsPileup_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(truePU,tt.recHitEn->at(rhItr)*ww);
-	  hName = "h_recHitEnRAW_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitEnRAW->at(rhItr),ww);
-	  hName = "h_recHitIEta_d"+std::to_string(depth)+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitIEta->at(rhItr),ww);
-	  hName = "h_recHitIPhi_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitIPhi->at(rhItr),ww);
-	  hName = "h_recHitEnVsIEta_d"+std::to_string(depth)+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitIEta->at(rhItr),tt.recHitEn->at(rhItr)*ww);
-	  hName = "h_recHitEnVsIPhi_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitIPhi->at(rhItr),tt.recHitEn->at(rhItr)*ww);
-	  hName = "h_recHitChi2_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(log(tt.recHitChi2->at(rhItr)),ww);
-	  hName = "h_recHitTime_"+detSuffix+puSuffix;
-	  histoMap[hName]->Fill(tt.recHitTime->at(rhItr),ww);
+	  int det = tt.recHitSub->at(rhItr);
 
-	  if(maxRecHitsEnMap.find(detSuffix+puSuffix) == maxRecHitsEnMap.end())
-	    {
-	      maxRecHitsEnMap[detSuffix+puSuffix] = tt.recHitEn->at(rhItr);
-	      maxRecHitsIEtaMap[detSuffix+puSuffix] = tt.recHitIEta->at(rhItr);
-	      maxRecHitsIPhiMap[detSuffix+puSuffix] = tt.recHitIPhi->at(rhItr);
-	      nRecHitsMap[detSuffix+puSuffix] = 0;
-	    }
-	  else if(tt.recHitEn->at(rhItr) > maxRecHitsEnMap[detSuffix+puSuffix])
-	    {
-	      maxRecHitsEnMap[detSuffix+puSuffix] = tt.recHitEn->at(rhItr);
-	      maxRecHitsIEtaMap[detSuffix+puSuffix] = tt.recHitIEta->at(rhItr);
-	      maxRecHitsIPhiMap[detSuffix+puSuffix] = tt.recHitIPhi->at(rhItr);	      
-	    }
-	  ++nRecHitsMap[detSuffix+puSuffix];
+
+	  myHistos.fill("h_recHitIEta",     truePU,det,depth,ieta, ieta,-1 ,ww);
+	  myHistos.fill("h_recHitEnVsIEta", truePU,det,depth,ieta, ieta,en ,ww);
+	  myHistos.fill("h_recHitIPhi",     truePU,det,depth,ieta, iphi,-1 ,ww);
+	  myHistos.fill("h_recHitEnVsIPhi", truePU,det,depth,ieta, iphi,en ,ww);
+
+	  myHistos.fill("h_recHitEn",       truePU,det,depth,ieta, en,-1 ,ww);
+	  myHistos.fill("h_recHitEnTmp",    truePU,det,depth,ieta, en,-1 ,ww);
+	  myHistos.fill("h_recHitEnVsPu",   truePU,det,depth,ieta, en,truePU ,ww);
+	  myHistos.fill("h_recHitEnRAW",    truePU,det,depth,ieta, enRAW,-1 ,ww);
+
+	  //	  myHistos.fill("h_recHitEnVsPU",       truePU,det,depth,ieta, en,-1 ,ww);
+
+	  myHistos.fill("h_recHitTime",       truePU,det,depth,ieta, time,-1 ,ww);
+	  myHistos.fill("h_recHitChi2",       truePU,det,depth,ieta, chi2,-1 ,ww);
 
 	}
 
-       for(auto& subDet : nRecHitsMap)
-       	  {
-	    std::string suffix = subDet.first;
-       	    std::string hName = "h_recHitNum_"+suffix;
-       	    histoMap[hName]->Fill(nRecHitsMap[suffix],ww);
+      //fill max and nrechits
+      auto recHitEnMapPU = myHistos.getHistoVec("h_recHitEn");
+      for(auto& hist: recHitEnMapPU)
+	{
+	  myHistos.fill("h_recHitNum",        hist.first, hist.second->GetEntries(),-1 ,ww);
+	  int lastBin = hist.second->FindLastBinAbove();
+	  myHistos.fill("h_recHitMaxEn",      hist.first, hist.second->GetXaxis()->GetBinCenter(lastBin),-1 ,ww);
+	}
 
-       	    hName = "h_recHitNumVsPileup_"+suffix;
-       	    histoMap[hName]->Fill(truePU,nRecHitsMap[suffix]*ww);
-          
-       	    hName = "h_recHitMaxEn_"+suffix;
-       	    histoMap[hName]->Fill(maxRecHitsEnMap[suffix],ww);
-          
-       	    hName = "h_recHitMaxIEta_"+suffix;
-       	    histoMap[hName]->Fill(maxRecHitsIEtaMap[suffix],ww);
-          
-       	    hName = "h_recHitMaxIPhi_"+suffix;
-       	    histoMap[hName]->Fill(maxRecHitsIPhiMap[suffix],ww);
-       	  }
+      auto recHitEnMap = myHistos.getHistoVec("h_recHitEnTmp");
+      for(auto& hist: recHitEnMap)
+	myHistos.fill("h_recHitNumVsPu",    hist.first, hist.second->GetEntries(),truePU ,ww);
+      
 
     }//end event loop
   std::cout << std::endl;
-
 
   outFile->Write();
   outFile->Close();
