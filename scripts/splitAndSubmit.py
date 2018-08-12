@@ -80,24 +80,32 @@ for line in  ins:
         if(not isData):
             os.system("cp "+opt.weights+" "+workingDir)
         
-        os.system("echo cd "+pwd+" > launch.sh")
-        os.system("echo 'eval `scramv1 runtime -sh`\n' >> launch.sh")
-        os.system("echo cd - >> launch.sh")
+        launch = "launch_"
+        if(not isData):
+            launch += "mc_"
+        else:
+            launch += "dat_"
 
-        os.system("echo cp "+pwd+"/"+opt.executable+" ./ >> launch.sh")
-        os.system("echo cp -r "+pwd+"/"+path+"/../lib ./ >> launch.sh")
+        launch += str(jobCount)+".sh"
+
+        os.system("echo cd "+pwd+" > "+launch)
+        os.system("echo 'eval `scramv1 runtime -sh`\n' >> "+launch)
+        os.system("echo cd - >> "+launch)
+
+        os.system("echo cp "+pwd+"/"+opt.executable+" ./ >> "+launch)
+        os.system("echo cp -r "+pwd+"/"+path+"/../lib ./ >> "+launch)
 
 
         if(not isData):
-            os.system("echo  ./"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt "+workingDir+"/"+opt.weights+" >> launch.sh")
-            os.system("echo mv "+opt.output+"_MC.root "+workingDir+"/"+opt.output+"_MC_"+str(jobCount)+".root >> launch.sh")
+            os.system("echo  ./"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt "+workingDir+"/"+opt.weights+" >> "+launch)
+            os.system("echo mv "+opt.output+"_MC.root "+workingDir+"/"+opt.output+"_MC_"+str(jobCount)+".root >> "+launch)
         else:
-            os.system("echo  ./"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt >> launch.sh")
-            os.system("echo mv "+opt.output+"_data.root "+workingDir+"/"+opt.output+"_data_"+str(jobCount)+".root >> launch.sh")
+            os.system("echo  ./"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt >> "+launch)
+            os.system("echo mv "+opt.output+"_data.root "+workingDir+"/"+opt.output+"_data_"+str(jobCount)+".root >> "+launch)
 
-        os.system("chmod 755 launch.sh")
-        os.system("mv launch.sh "+workingDir+"/"+str(jobCount))
-        njobs_list.append("bsub -q "+opt.queue+" -o "+workingDir+"/"+str(jobCount)+"/log.out -e "+workingDir+"/"+str(jobCount)+"/log.err "+workingDir+"/"+str(jobCount)+"/launch.sh")
+        os.system("chmod 755 "+launch)
+        os.system("mv "+launch+" "+workingDir+"/"+str(jobCount))
+        njobs_list.append("bsub -q "+opt.queue+" -o "+workingDir+"/"+str(jobCount)+"/log.out -e "+workingDir+"/"+str(jobCount)+"/log.err "+workingDir+"/"+str(jobCount)+"/"+launch)
         
 for job in njobs_list:
     print job

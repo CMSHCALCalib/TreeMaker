@@ -23,7 +23,7 @@ float getNrExpPU(int runnr,int lumiSec,int bx)
    
   static const BXPUInfo* bxPUInfo = nullptr;
   if(!bxPUInfo){
-    std::cout << "Open file bxPUInfo.root" << std::endl;
+    std::cout << "getNrExpPU::Open bxPUInfo.root" << std::endl;
     TFile* file = TFile::Open("/afs/cern.ch/work/d/deguio/HCAL/dataMCcomparison/CMSSW_10_2_0_dataMCcomparison/src/CMSHCALCalib/TreeMaker/macros/Utils/bxPUInfo.root");
     bxPUInfo = (const BXPUInfo*)file->Get("bxPUInfo");
   }  

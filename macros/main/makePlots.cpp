@@ -59,6 +59,8 @@ struct TreeVars
   std::vector<int>* recHitDepth;
   std::vector<int>* recHitSub;
 
+  std::vector<int>* hltAccept;
+
 };
 
 void InitTreeVars(TTree* chain, TreeVars& tt)
@@ -90,6 +92,9 @@ void InitTreeVars(TTree* chain, TreeVars& tt)
   chain -> SetBranchAddress("recHitIPhi",&tt.recHitIPhi);
   chain -> SetBranchAddress("recHitDepth",&tt.recHitDepth);
   chain -> SetBranchAddress("recHitSub",&tt.recHitSub);
+
+  tt.hltAccept = 0;
+  chain -> SetBranchAddress("hltAccept",&tt.hltAccept);
 }
 
 
@@ -141,10 +146,10 @@ int main(int argc, char** argv)
   
   myHistos.initHisto("h_recHitEn",   "SubDepthIetaPu",2500,0,5000,"recHitEn [GeV]");
   myHistos.initHisto("h_recHitEnRAW","SubDepthIetaPu",2500,0,5000,"recHitEnRAW [GeV]");
-  myHistos.initHisto("h_recHitEnVsPu","SubDepthIeta",2500,0,5000,"recHitEn [GeV]","pileup");
+  myHistos.initHisto("h_recHitEnVsPu","SubDepthIeta",100,0,100,"pileup","recHitEn [GeV]");
 
   myHistos.initHisto("h_recHitNum","SubDepthIetaPu",400,0,4000,"number of recHits");
-  myHistos.initHisto("h_recHitNumVsPu","SubDepthIeta",400,0,4000,"number of recHits","pileup");
+  myHistos.initHisto("h_recHitNumVsPu","SubDepthIeta",100,0,100,"pileup","number of recHits");
 
   myHistos.initHisto("h_recHitChi2","SubDepthIetaPu",1000,0,100,"log(recHitChi2)");
   myHistos.initHisto("h_recHitTime","SubDepthIetaPu",60,-30,30,"recHitTime [ns]");
@@ -165,6 +170,11 @@ int main(int argc, char** argv)
       if(entry % 1000 == 0)
    	std::cout << "reading entry " << entry << " / " << nEntries << "\r" << std::flush;
       chain -> GetEntry(entry);
+
+      //select on zerobias only
+      if(isData && tt.hltAccept->at(0) != 1)
+	continue;
+
       
       // get PU weights
       int truePU = -1;
@@ -175,7 +185,7 @@ int main(int argc, char** argv)
    	  truePU = tt.pileup;
    	}
       else
-   	truePU = getNrExpPU(tt.run,tt.lumi,tt.bx);
+	truePU = std::floor(getNrExpPU(tt.run,tt.lumi,tt.bx)+0.5);
       
 
       // fill global histograms

@@ -63,8 +63,8 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
 				    "h_recHitChi2_",
 				    "h_recHitTime_",
 				    "h_recHitMaxEn_",
-				    "h_recHitMaxIEta_", "h_recHitMaxIPhi_"};
-                                    //"h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
+				    "h_recHitMaxIEta_", "h_recHitMaxIPhi_",
+				    "h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
 
   std::vector<int> v_setLog = {0,       //"h_pileup",					    
 			       1,	//"h_recHitEn_",				    
@@ -75,8 +75,8 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
 			       0,	//"h_recHitChi2_",				    
 			       0,	//"h_recHitTime_",				    
 			       1,	//"h_recHitMaxEn_",				    
-			       0, 0};	//"h_recHitMaxIEta_", "h_recHitMaxIPhi_"};	    
-                               //1, 0};	//"h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
+			       0, 0,	//"h_recHitMaxIEta_", "h_recHitMaxIPhi_"};	    
+                               0, 0};	//"h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
   
   std::vector<int> v_setXmax = {0,      //"h_pileup",					
 				150,	//"h_recHitEn_",				
@@ -87,8 +87,8 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
 				0,	//"h_recHitChi2_",				
 				0,	//"h_recHitTime_",				
 				150,	//"h_recHitMaxEn_",				
-				0, 0};	//"h_recHitMaxIEta_", "h_recHitMaxIPhi_"};	
-                                //0, 0};//"h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
+				0, 0,	//"h_recHitMaxIEta_", "h_recHitMaxIPhi_"};	
+                                0, 0};//"h_recHitEnVsPileup_","h_recHitNumVsPileup_"};
   
   std::vector<int> v_scaleContent = {1,
 				     1,
@@ -99,8 +99,8 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
 				     1,
 				     1,
 				     1,
-				     1, 1};
-                                     //0, 0};
+				     1, 1,
+                                     0, 0};
 
 
   //open files
