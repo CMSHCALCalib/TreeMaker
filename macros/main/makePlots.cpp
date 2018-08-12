@@ -14,8 +14,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "./Utils/LumiInfoProvider.h"
-#include "./Utils/HistoFactory.h"
+#include "interface/LumiInfoProvider.h"
+#include "interface/BXPUInfo.h"
+#include "interface/HistoFactory.h"
+#include "interface/dataPuFunc.h"
 
 std::vector<int> puVector{0,20,30,40,50,100};
 std::vector<int> ietaVector{16,24,29};
@@ -44,7 +46,7 @@ TChain* loadChain(std::string fileList)
 
 struct TreeVars
 {  
-  unsigned int run, lumi, event, pileup;
+  unsigned int run, lumi, event, bx, pileup;
   
   std::vector<float>* recHitEn;
   std::vector<float>* recHitEaux;
@@ -64,6 +66,7 @@ void InitTreeVars(TTree* chain, TreeVars& tt)
   chain -> SetBranchAddress("run",&tt.run);
   chain -> SetBranchAddress("lumi",&tt.lumi);
   chain -> SetBranchAddress("event",&tt.event);
+  chain -> SetBranchAddress("bx",&tt.bx);
   chain -> SetBranchAddress("pileup",&tt.pileup);
 
   tt.recHitEn = 0;
@@ -124,10 +127,6 @@ int main(int argc, char** argv)
   TreeVars tt;
   InitTreeVars(chain,tt); 
 
-  // init lumi provider
-  LumiInfoProvider lumiInfoProvider("/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PileUp/pileup_latest.txt");
-
-
 
   //book histos
   HistoFactory myHistos(puVector,ietaVector,outFile);
@@ -141,18 +140,19 @@ int main(int argc, char** argv)
   myHistos.initHisto("h_recHitEnVsIPhi","SubDepthIetaPu",72,0,72,"recHitIPhi","recHitEn [GeV]");
   
   myHistos.initHisto("h_recHitEn",   "SubDepthIetaPu",2500,0,5000,"recHitEn [GeV]");
-  myHistos.initHisto("h_recHitEnTmp", "SubDepthIeta",2500,0,5000,"recHitEn [GeV]");
   myHistos.initHisto("h_recHitEnRAW","SubDepthIetaPu",2500,0,5000,"recHitEnRAW [GeV]");
   myHistos.initHisto("h_recHitEnVsPu","SubDepthIeta",2500,0,5000,"recHitEn [GeV]","pileup");
 
   myHistos.initHisto("h_recHitNum","SubDepthIetaPu",400,0,4000,"number of recHits");
   myHistos.initHisto("h_recHitNumVsPu","SubDepthIeta",400,0,4000,"number of recHits","pileup");
 
-  myHistos.initHisto("h_recHitChi2","SubDepthIetaPu",100,0,10,"log(recHitChi2)");
+  myHistos.initHisto("h_recHitChi2","SubDepthIetaPu",1000,0,100,"log(recHitChi2)");
   myHistos.initHisto("h_recHitTime","SubDepthIetaPu",60,-30,30,"recHitTime [ns]");
   myHistos.initHisto("h_recHitMaxEn","SubDepthIetaPu",2500,0,5000,"recHitMaxEn [GeV]");
 
 
+  myHistos.initHisto("h_recHitEnNoPuTMP","SubDepthIeta",2500,0,5000,"recHitEn [GeV]");
+  myHistos.initHisto("h_recHitEnTMP","SubDepthIetaPu",2500,0,5000,"recHitEn [GeV]");
   
 
   //loop over events
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
    	  truePU = tt.pileup;
    	}
       else
-   	truePU = lumiInfoProvider.getNrExptPUInt(tt.run,tt.lumi);
+   	truePU = getNrExpPU(tt.run,tt.lumi,tt.bx);
       
       std::unordered_map<std::string,int> nRecHitsMap;
       std::unordered_map<std::string,int> maxRecHitsEnMap;
@@ -218,29 +218,34 @@ int main(int argc, char** argv)
 	  myHistos.fill("h_recHitEnVsIPhi", truePU,det,depth,ieta, iphi,en ,ww);
 
 	  myHistos.fill("h_recHitEn",       truePU,det,depth,ieta, en,-1 ,ww);
-	  myHistos.fill("h_recHitEnTmp",    truePU,det,depth,ieta, en,-1 ,ww);
 	  myHistos.fill("h_recHitEnVsPu",   truePU,det,depth,ieta, en,truePU ,ww);
 	  myHistos.fill("h_recHitEnRAW",    truePU,det,depth,ieta, enRAW,-1 ,ww);
 
-	  //	  myHistos.fill("h_recHitEnVsPU",       truePU,det,depth,ieta, en,-1 ,ww);
-
 	  myHistos.fill("h_recHitTime",       truePU,det,depth,ieta, time,-1 ,ww);
-	  myHistos.fill("h_recHitChi2",       truePU,det,depth,ieta, chi2,-1 ,ww);
+	  myHistos.fill("h_recHitChi2",       truePU,det,depth,ieta, log10(chi2),-1 ,ww);
 
+	  myHistos.fill("h_recHitEnTMP",    truePU,det,depth,ieta, en,-1 ,ww);
+	  myHistos.fill("h_recHitEnNoPuTMP",truePU,det,depth,ieta, en,-1 ,ww);
 	}
 
       //fill max and nrechits
-      auto recHitEnMapPU = myHistos.getHistoVec("h_recHitEn");
+      auto recHitEnMapPU = myHistos.getHistoVec("h_recHitEnTMP");
       for(auto& hist: recHitEnMapPU)
-	{
-	  myHistos.fill("h_recHitNum",        hist.first, hist.second->GetEntries(),-1 ,ww);
-	  int lastBin = hist.second->FindLastBinAbove();
-	  myHistos.fill("h_recHitMaxEn",      hist.first, hist.second->GetXaxis()->GetBinCenter(lastBin),-1 ,ww);
-	}
+	if(hist.second->GetEntries() != 0)
+	  {
+	    myHistos.fill("h_recHitNum",        hist.first, hist.second->GetEntries(),-1 ,ww);
+	    int lastBin = hist.second->FindLastBinAbove();
+	    myHistos.fill("h_recHitMaxEn",      hist.first, hist.second->GetXaxis()->GetBinCenter(lastBin),-1 ,ww);
+	    hist.second->Reset();
+	  }
 
-      auto recHitEnMap = myHistos.getHistoVec("h_recHitEnTmp");
+      auto recHitEnMap = myHistos.getHistoVec("h_recHitEnNoPuTMP");
       for(auto& hist: recHitEnMap)
-	myHistos.fill("h_recHitNumVsPu",    hist.first, hist.second->GetEntries(),truePU ,ww);
+	if(hist.second->GetEntries() != 0)
+	  {
+	    myHistos.fill("h_recHitNumVsPu",    hist.first, hist.second->GetEntries(),truePU ,ww);
+	    hist.second->Reset();
+	  }
       
 
     }//end event loop

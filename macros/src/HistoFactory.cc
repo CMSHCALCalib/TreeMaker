@@ -1,15 +1,4 @@
-#ifndef HISTOFACTORY_H
-#define HISTOFACTORY_H
-
-//Just an histogram container for the data/MC comparison
-//Authorn: Federico De Guio, August 2018
-
-#include "TH1.h"
-#include "TFile.h"
-
-#include <iostream>
-#include <string>
-#include <unordered_map>
+#include "interface/HistoFactory.h"
 
 std::string getPartition(int sub, int ieta)
 {
@@ -45,58 +34,10 @@ std::pair<int,int> findBin(int val,std::vector<int> vec)
   return (std::make_pair(abs(binMin),abs(binMax)));
 }
 
-class HistoFactory {
- private:
-  int debug_;
-  TFile* outFile_;
-  //contains the histograms
-  std::unordered_map<std::string, std::unordered_map<std::string,TH1*>> hMap_;
-  std::unordered_map<std::string, std::string> tMap_;
-
-  //defines the binning for histo types
-  std::vector<int> puVec_;
-  std::vector<int> ietaVec_;
-  std::vector<std::string> subVec_;
-  int depthNum_;
-
- public:
-  HistoFactory(std::vector<int> puVec,
-	       std::vector<int> ietaVec,
-	       TFile* outFile, int debug=0)
-    {
-      puVec_   = puVec;
-      ietaVec_ = ietaVec;
-      outFile_ = outFile;
-      debug_   = debug;
-
-      subVec_   = {"HBM","HBP","HEM","HEP","HFM","HFP"};
-      depthNum_ = 7;
-    }
-
-  std::unordered_map<std::string, TH1*> getHistoVec(std::string hName)
-    {
-      return hMap_[hName];
-    }
-
-  void initHisto(std::string hName,
-		 std::string hType,
-		 int, int, int,
-		 std::string, std::string);
-
-  TH1* bookHisto(std::string hName,
-		 int, int, int,
-		 std::string, std::string);
-
-  void fill(std::string hName, int, int, int, int, double, double, double);
-  void fill(std::string hOrigName, std::string hName, double, double, double);
-
-
-};
-
 void HistoFactory::initHisto(std::string hOrigName,
 			     std::string hType,
 			     int nBins, int min, int max,
-			     std::string hTitleX, std::string hTitleY="")
+			     std::string hTitleX, std::string hTitleY)
 {
   outFile_->cd();
   std::unordered_map<std::string,TH1*> tempMap;
@@ -152,7 +93,7 @@ void HistoFactory::initHisto(std::string hOrigName,
 
 TH1* HistoFactory::bookHisto(std::string hName,
 			     int nBins, int min, int max,
-			     std::string hTitleX, std::string hTitleY="")
+			     std::string hTitleX, std::string hTitleY)
 {
   TH1* hTemp;
   if(hTitleY != "")
@@ -171,7 +112,7 @@ TH1* HistoFactory::bookHisto(std::string hName,
   return hTemp;
 }
 
-void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, double yy=0, double ww=1)
+void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, double yy, double ww)
 {
   if(hMap_.find(hOrigName) == hMap_.end())
     {
@@ -191,7 +132,7 @@ void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, dou
 
 }
 
-void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int ieta, double xx, double yy=0, double ww=1)
+void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int ieta, double xx, double yy, double ww)
 {
   if(hMap_.find(hOrigName) == hMap_.end())
     {
@@ -220,6 +161,7 @@ void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int i
       hName += "_pu"+std::to_string(boundPu.first)+"-"+std::to_string(boundPu.second);
     }
 
+  
   if(debug_) std::cout << "HistoFactory::fill ==>  hName: " << hOrigName+hName
 		       << " pu: " << pu
 		       << " det: " << det
@@ -234,8 +176,3 @@ void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int i
   else
     hMap_[hOrigName][hName]->Fill(xx, ww);    //TH1D
 }
-
-
-
-
-#endif

@@ -89,6 +89,7 @@ private:
   int run;
   int lumi;
   int event;
+  int bx;
   int pileup;
 
   std::vector<float>* recHitEn;
@@ -150,6 +151,7 @@ RecHitTree::RecHitTree(const edm::ParameterSet& iConfig)
   tt->Branch("run", &run, "run/I");
   tt->Branch("lumi", &lumi, "lumi/I");
   tt->Branch("event", &event, "event/I");
+  tt->Branch("bx",    &bx, "bx/I");
   tt->Branch("pileup", &pileup, "pileup/I");
 
   recHitEn   = new std::vector<float>;
@@ -231,7 +233,7 @@ RecHitTree::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    run = iEvent.id().run();
    lumi = iEvent.id().luminosityBlock();
    event = iEvent.id().event();
-
+   bx = iEvent.bunchCrossing();
 
    //fill HLT results
    edm::Handle<edm::TriggerResults>   triggerResults;
