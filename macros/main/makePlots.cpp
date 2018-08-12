@@ -228,7 +228,7 @@ int main(int argc, char** argv)
 	  myHistos.fill("h_recHitEnNoPuTMP",truePU,det,depth,ieta, en,-1 ,ww);
 	}
 
-      //fill max and nrechits
+      //fill max and nrechits - use tmp plots and reset them at every events
       auto recHitEnMapPU = myHistos.getHistoVec("h_recHitEnTMP");
       for(auto& hist: recHitEnMapPU)
 	if(hist.second->GetEntries() != 0)

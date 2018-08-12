@@ -114,7 +114,7 @@ TH1* HistoFactory::bookHisto(std::string hName,
 
 void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, double yy, double ww)
 {
-  if(hMap_.find(hOrigName) == hMap_.end())
+  if(debug_ && hMap_.find(hOrigName) == hMap_.end())
     {
       std::cout << "==>> " << hOrigName << " ==>> HISTOGRAM NOT BOOKED <<==" << std::endl;
       return;
@@ -134,7 +134,7 @@ void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, dou
 
 void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int ieta, double xx, double yy, double ww)
 {
-  if(hMap_.find(hOrigName) == hMap_.end())
+  if(debug_ && hMap_.find(hOrigName) == hMap_.end())
     {
       std::cout << "==>> " << hOrigName << " ==>> HISTOGRAM NOT BOOKED <<==" << std::endl;
       return;      

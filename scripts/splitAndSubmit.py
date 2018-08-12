@@ -77,7 +77,6 @@ for line in  ins:
 
         inputlist = []
 
-        os.system("cp "+opt.executable+" "+workingDir)
         if(not isData):
             os.system("cp "+opt.weights+" "+workingDir)
         
@@ -85,11 +84,15 @@ for line in  ins:
         os.system("echo 'eval `scramv1 runtime -sh`\n' >> launch.sh")
         os.system("echo cd - >> launch.sh")
 
+        os.system("echo cp "+pwd+"/"+opt.executable+" ./ >> launch.sh")
+        os.system("echo cp -r "+pwd+"/"+path+"/../lib ./ >> launch.sh")
+
+
         if(not isData):
-            os.system("echo  "+workingDir+"/"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt "+workingDir+"/"+opt.weights+" >> launch.sh")
+            os.system("echo  ./"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt "+workingDir+"/"+opt.weights+" >> launch.sh")
             os.system("echo mv "+opt.output+"_MC.root "+workingDir+"/"+opt.output+"_MC_"+str(jobCount)+".root >> launch.sh")
         else:
-            os.system("echo  "+workingDir+"/"+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt >> launch.sh")
+            os.system("echo  "+exename+" "+workingDir+"/"+str(jobCount)+"/fileList.txt >> launch.sh")
             os.system("echo mv "+opt.output+"_data.root "+workingDir+"/"+opt.output+"_data_"+str(jobCount)+".root >> launch.sh")
 
         os.system("chmod 755 launch.sh")
