@@ -177,11 +177,6 @@ int main(int argc, char** argv)
       else
    	truePU = getNrExpPU(tt.run,tt.lumi,tt.bx);
       
-      std::unordered_map<std::string,int> nRecHitsMap;
-      std::unordered_map<std::string,int> maxRecHitsEnMap;
-      std::unordered_map<std::string,int> maxRecHitsIEtaMap;
-      std::unordered_map<std::string,int> maxRecHitsIPhiMap;
-
 
       // fill global histograms
       myHistos.fill("h_pileupGlo",-1,-1,-1,-1, truePU, -1 ,ww);

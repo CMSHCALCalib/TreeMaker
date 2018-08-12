@@ -1,6 +1,6 @@
 #include "interface/HistoFactory.h"
 
-std::string getPartition(int sub, int ieta)
+std::string getPartition(int& sub, int& ieta)
 {
   std::string partition = "";
 
@@ -19,7 +19,7 @@ std::string getPartition(int sub, int ieta)
   return partition;
 }
 
-std::pair<int,int> findBin(int val,std::vector<int> vec)
+std::pair<int,int> findBin(int& val,std::vector<int>& vec)
 {
   int binMin = -1;
   int binMax = -1;
