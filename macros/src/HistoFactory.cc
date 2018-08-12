@@ -1,14 +1,21 @@
 #include "interface/HistoFactory.h"
 
-std::string getPartition(int& sub, int& ieta)
+void append_uint_to_str(std::string & s, unsigned int i)
+{
+  if(i > 9)
+    append_uint_to_str(s, i / 10);
+  s += '0' + i % 10;
+}
+
+std::string getPartition(unsigned int& sub, int& ieta)
 {
   std::string partition = "";
 
   if(sub == 1)
     partition = "HB";
-  if(sub == 2)
+  else if(sub == 2)
     partition = "HE";
-  if(sub == 4)
+  else if(sub == 4)
     partition = "HF";
 
   if(ieta < 0)
@@ -19,10 +26,11 @@ std::string getPartition(int& sub, int& ieta)
   return partition;
 }
 
-std::pair<int,int> findBin(int& val,std::vector<int>& vec)
+std::pair<int,int> findBin(int val,std::vector<int>& vec)
 {
   int binMin = -1;
   int binMax = -1;
+  val = abs(val);
   for(unsigned int bin = 1; bin<vec.size(); ++bin)
     if(val <= vec[bin])
       {
@@ -31,7 +39,7 @@ std::pair<int,int> findBin(int& val,std::vector<int>& vec)
 	break;
       }
 
-  return (std::make_pair(abs(binMin),abs(binMax)));
+  return (std::make_pair(binMin,binMax));
 }
 
 void HistoFactory::initHisto(std::string hOrigName,
@@ -41,6 +49,7 @@ void HistoFactory::initHisto(std::string hOrigName,
 {
   outFile_->cd();
   std::unordered_map<std::string,TH1*> tempMap;
+  types hash;
 
   for(auto isub=subVec_.begin(); isub!=subVec_.end(); ++isub)
     for(unsigned int depth=1; depth<depthNum_+1; ++depth)
@@ -50,7 +59,10 @@ void HistoFactory::initHisto(std::string hOrigName,
 	    std::string hName = "";
 
 	    if(hType.find("Sub") != std::string::npos)
-	      hName += "_"+*isub;
+	      {
+		hName += "_"+*isub;
+		hash.Sub = 1;
+	      }
 	    
 	    if(hType.find("Depth") != std::string::npos)
 	      {
@@ -58,13 +70,17 @@ void HistoFactory::initHisto(std::string hOrigName,
 		if(((isub->find("HB") != std::string::npos) || (isub->find("HF") != std::string::npos)) && depth > 2)
 		  continue;	       
 		hName += "_d"+std::to_string(depth);
+		hash.Depth = 1;
 	      }
 	    
 	    if(hType.find("Ieta") != std::string::npos)
 	      {
 		//create ieta bins for HE only
 		if(isub->find("HE") != std::string::npos)
-		  hName += "_ieta"+std::to_string(ietaVec_.at(ieta-1))+"-"+std::to_string(ietaVec_.at(ieta));
+		  {
+		    hName += "_ieta"+std::to_string(ietaVec_.at(ieta-1))+"-"+std::to_string(ietaVec_.at(ieta));
+		    hash.Ieta = 1;
+		  }
 	      }
 	    
 	    if(hType.find("Pu") != std::string::npos)
@@ -72,6 +88,7 @@ void HistoFactory::initHisto(std::string hOrigName,
 		//create pu bins
 		std::string puSuffix = "_pu"+std::to_string(puVec_.at(ipu-1))+"-"+std::to_string(puVec_.at(ipu));
 		hName += puSuffix;
+		hash.Pu = 1;
 
 		TDirectory* dir = outFile_->GetDirectory(puSuffix.c_str());
 		if(!dir)
@@ -88,7 +105,7 @@ void HistoFactory::initHisto(std::string hOrigName,
 
   //fill the histo containers
   hMap_[hOrigName] = tempMap;
-  tMap_[hOrigName] = hType;
+  tMap_[hOrigName] = hash;
 }
 
 TH1* HistoFactory::bookHisto(std::string hName,
@@ -132,7 +149,7 @@ void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, dou
 
 }
 
-void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int ieta, double xx, double yy, double ww)
+void HistoFactory::fill(std::string hOrigName, unsigned int pu, unsigned int det, unsigned int depth, int ieta, double xx, double yy, double ww)
 {
   if(debug_ && hMap_.find(hOrigName) == hMap_.end())
     {
@@ -143,22 +160,31 @@ void HistoFactory::fill(std::string hOrigName, int pu, int det, int depth, int i
   std::string hName = "";
 
   std::string sub = getPartition(det, ieta);
-  if(tMap_[hOrigName].find("Sub") != std::string::npos)
+  if(tMap_[hOrigName].Sub)
     hName += "_"+sub;
 
-  if(tMap_[hOrigName].find("Depth") != std::string::npos)
-    hName += "_d"+std::to_string(depth);
+  if(tMap_[hOrigName].Depth)
+    {
+      hName += "_d";
+      append_uint_to_str(hName,depth);
+    }
 
-  if(tMap_[hOrigName].find("Ieta") != std::string::npos && sub.find("HE") != std::string::npos)
+  if(tMap_[hOrigName].Ieta && det == 2)
       {
 	std::pair<int,int> boundIeta = findBin(ieta,ietaVec_);
-	hName += "_ieta"+std::to_string(boundIeta.first)+"-"+std::to_string(boundIeta.second);
+	hName += "_ieta";
+	append_uint_to_str(hName,boundIeta.first);
+	hName += "-";
+	append_uint_to_str(hName,boundIeta.second);
       }
 
-  if(tMap_[hOrigName].find("Pu") != std::string::npos)
+  if(tMap_[hOrigName].Pu)
     {
       std::pair<int,int> boundPu = findBin(pu,puVec_);
-      hName += "_pu"+std::to_string(boundPu.first)+"-"+std::to_string(boundPu.second);
+      hName += "_pu";
+      append_uint_to_str(hName,boundPu.first);
+      hName += "-";
+      append_uint_to_str(hName,boundPu.second);
     }
 
   

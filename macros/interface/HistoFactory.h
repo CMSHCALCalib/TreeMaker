@@ -12,6 +12,12 @@
 #include <string>
 #include <unordered_map>
 
+struct types{
+  int Sub = 0;
+  int Depth = 0;
+  int Ieta = 0;
+  int Pu = 0;
+};
 
 class HistoFactory {
  private:
@@ -19,7 +25,7 @@ class HistoFactory {
   TFile* outFile_;
   //contains the histograms
   std::unordered_map<std::string, std::unordered_map<std::string,TH1*>> hMap_;
-  std::unordered_map<std::string, std::string> tMap_;
+  std::unordered_map<std::string, types> tMap_;
 
   //defines the binning for histo types
   std::vector<int> puVec_;
@@ -56,7 +62,7 @@ class HistoFactory {
 		 std::string hTitleX, std::string hTitleY="");
 
   void fill(std::string hOrigName, std::string hName, double xx, double yy=0, double ww=1);
-  void fill(std::string hOrigName, int pu, int det, int depth, int ieta, double xx, double yy=0, double ww=1);
+  void fill(std::string hOrigName, unsigned int pu, unsigned int det, unsigned int depth, int ieta, double xx, double yy=0, double ww=1);
 
 
 };
