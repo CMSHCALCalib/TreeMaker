@@ -28,7 +28,7 @@ float rhThr_HB    = 0.8;
 float rhThr_HE_d1 = 0.1;
 float rhThr_HE    = 0.2;
 
-bool calibrate = false;
+bool calibrate = true;
 //########### End config #################
 
 
@@ -39,8 +39,8 @@ void calibrateEnergy(float& en, float& enRAW, int& depth, int& det)
 
   if(depth==1)
     {
-      en *= 1.33;
-      enRAW *= 1.33;
+      en *= 1.15;
+      enRAW *= 1.15;
     }
   else if(depth==2)
     {
@@ -49,23 +49,23 @@ void calibrateEnergy(float& en, float& enRAW, int& depth, int& det)
     }
   else if(depth==3)
     {
-      en *= 1.2;
-      enRAW *= 1.2;
+      en *= 1.1;
+      enRAW *= 1.1;
     }
   else if(depth==4)
     {
-      en *= 1.2;
-      enRAW *= 1.2;
+      en *= 1.1;
+      enRAW *= 1.1;
     }
   else if(depth==5)
     {
-      en *= 0.95;
-      enRAW *= 0.95;
+      en *= 0.9;
+      enRAW *= 0.9;
     }
   else if(depth==6)
     {
-      en *= 1.25;
-      enRAW *= 1.25;
+      en *= 0.95;
+      enRAW *= 0.95;
     }
   return;
 }
@@ -245,14 +245,6 @@ int main(int argc, char** argv)
       // loop over rechits
       for (unsigned int rhItr = 0; rhItr<tt.recHitSub->size(); ++rhItr)
    	{
-   	  // basic rechit selections
-   	  if(tt.recHitSub->at(rhItr) == 1 && //HB
-	     tt.recHitEn->at(rhItr) < rhThr_HB)
-   	    continue;
-   	  if(tt.recHitSub->at(rhItr) == 2 && //HE
-	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? rhThr_HE : rhThr_HE_d1))
-   	    continue;
-
 	  float en = tt.recHitEn->at(rhItr);
 	  float enRAW = tt.recHitEnRAW->at(rhItr);
 	  float time = tt.recHitTime->at(rhItr);
@@ -264,9 +256,18 @@ int main(int argc, char** argv)
 
 	  int det = tt.recHitSub->at(rhItr);
 
-	  //recalibrate by hand
+	  // recalibrate by hand
 	  if(isData && calibrate)
 	    calibrateEnergy(en,enRAW,depth,det);
+
+	  
+   	  // basic rechit selections
+   	  if(det == 1 && //HB
+	     en < rhThr_HB)
+   	    continue;
+   	  if(det == 2 && //HE
+	     en < ((tt.recHitDepth->at(rhItr) > 1) ? rhThr_HE : rhThr_HE_d1))
+   	    continue;
 
 
 	  myHistos.fill("h_recHitIEta",     truePU,det,depth,ieta, ieta,-1 ,ww);
