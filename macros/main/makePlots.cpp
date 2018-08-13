@@ -28,7 +28,7 @@ float rhThr_HB    = 0.8;
 float rhThr_HE_d1 = 0.1;
 float rhThr_HE    = 0.2;
 
-bool calibrate = true;
+bool calibrate = false;
 //########### End config #################
 
 
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 	  myHistos.fill("h_recHitEnVsIPhi", truePU,det,depth,ieta, iphi,en ,ww);
 
 	  myHistos.fill("h_recHitEn",       truePU,det,depth,ieta, en,-1 ,ww);
-	  myHistos.fill("h_recHitEnVsPu",   truePU,det,depth,ieta, en,truePU ,ww);
+	  myHistos.fill("h_recHitEnVsPu",   truePU,det,depth,ieta, truePU,en ,ww);
 	  myHistos.fill("h_recHitEnRAW",    truePU,det,depth,ieta, enRAW,-1 ,ww);
 
 	  myHistos.fill("h_recHitTime",       truePU,det,depth,ieta, time,-1 ,ww);
@@ -301,7 +301,7 @@ int main(int argc, char** argv)
       for(auto& hist: recHitEnMap)
 	if(hist.second->GetEntries() != 0)
 	  {
-	    myHistos.fill("h_recHitNumVsPu",    hist.first, hist.second->GetEntries(),truePU ,ww);
+	    myHistos.fill("h_recHitNumVsPu",    hist.first, truePU,hist.second->GetEntries() ,ww);
 	    hist.second->Reset();
 	  }
       

@@ -143,9 +143,9 @@ void HistoFactory::fill(std::string hOrigName, std::string hName, double xx, dou
 		       << " ww: " << ww << std::endl;
   
   if(std::string(hMap_[hOrigName][hName]->GetYaxis()->GetTitle()) != "Entries")
-    hMap_[hOrigName][hName]->Fill(xx, yy*ww); //TProfile
+    ((TProfile*)hMap_[hOrigName][hName])->Fill(xx, yy, ww); //TProfile
   else
-    hMap_[hOrigName][hName]->Fill(xx, ww);    //TH1D
+    ((TH1D*)hMap_[hOrigName][hName])->Fill(xx, ww);    //TH1D
 
 }
 
@@ -198,7 +198,13 @@ void HistoFactory::fill(std::string hOrigName, unsigned int pu, unsigned int det
 		       << " ww: " << ww << std::endl;
 
   if(std::string(hMap_[hOrigName][hName]->GetYaxis()->GetTitle()) != "Entries")
-    hMap_[hOrigName][hName]->Fill(xx, yy*ww); //TProfile
+    {
+      if(debug_) std::cout << "HistoFactory::fill ==> TProfile" << std::endl;
+      ((TProfile*)hMap_[hOrigName][hName])->Fill(xx, yy, ww); //TProfile
+    }
   else
-    hMap_[hOrigName][hName]->Fill(xx, ww);    //TH1D
+    {
+      if(debug_) std::cout << "HistoFactory::fill ==> TH1D"<< std::endl;
+      ((TH1D*)hMap_[hOrigName][hName])->Fill(xx, ww);    //TH1D
+    }
 }

@@ -15,27 +15,37 @@ void loopdir(TFile* file, std::vector<TH1*>& histovec, std::string folder)
 
 void setDatastyle(TH1* histo)
 {
+  gPad->Update();
   histo->SetMarkerSize(0);  
   histo->SetLineWidth(2);
+  // TPaveStats *pdat = (TPaveStats*)histo->FindObject("stats");
+  // pdat->SetX1NDC(0.2);
+  //  pdat->SetY1NDC(0.7);
 }
 
 void setMCstyle(TH1* histo)
 {
+  gPad->Update();
   histo->SetLineColor(2);
   histo->SetMarkerColor(2);
+  TPaveStats *pmc = (TPaveStats*)histo->FindObject("stats");
+  //pmc->SetX2NDC(0.4);
+  pmc->SetY2NDC(0.9);
+  pmc->SetTextColor(kRed);
 }
 
 void setRatiostyle(TH1* histo)
 {
   histo->GetXaxis()->SetLabelSize(0.1);
   histo->GetYaxis()->SetLabelSize(0.1);
+  histo->SetStats(kFALSE);
 }
 
 void setGlobalStyle()
 {
   // For the statistics box:
   tdrStyle->SetOptFile(0);
-  tdrStyle->SetOptStat(000000); // To display the mean and RMS:   SetOptStat("mr");
+  tdrStyle->SetOptStat("mr"); // To display the mean and RMS:   SetOptStat("mr");
   tdrStyle->SetStatColor(kWhite);
   tdrStyle->SetStatFont(42);
   tdrStyle->SetStatFontSize(0.025);
@@ -140,9 +150,6 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
       // TMP: normalize to number of entries
       // float mcScale = h_Data.at(itr)->Integral() / h_MC.at(itr)->Integral();
 
-      setDatastyle(h_Data.at(itr));
-      setMCstyle(h_MC.at(itr));
-
       //legend
       TLegend* leg = new TLegend(0.82, 0.78, 1.03, 0.89);
       //leg->SetFillColor(kWhite);
@@ -153,7 +160,7 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
       c1 -> cd();
       TPad* p1 = new TPad("p1","p1",0., 0.25, 1., 1.);
       if(setLog)
-	    p1->SetLogy();
+	p1->SetLogy();
       TPad* p2 = new TPad("p2","p2",0., 0., 1., 0.25);
       p1 -> Draw();
       p2 -> Draw();
@@ -180,15 +187,18 @@ void comparePlots(std::string plotsData, std::string plotsMC, std::string folder
 	h_MC.at(itr)->Scale(mcScale);
 
       h_Data.at(itr)->Draw("HISTO,E");
+      setDatastyle(h_Data.at(itr));
+
       h_MC.at(itr)->Draw("P,sames");
+      setMCstyle(h_MC.at(itr));
       leg->Draw("same");
 
 
-      TH1F* ratioHisto;
+      TH1D* ratioHisto;
       if(h_Data.at(itr)->GetXaxis()->GetXbins()->GetArray() != nullptr)
-	ratioHisto = new TH1F("tmp","tmp",h_Data.at(itr)->GetNbinsX(),h_Data.at(itr)->GetXaxis()->GetXbins()->GetArray());
+	ratioHisto = new TH1D("tmp","tmp",h_Data.at(itr)->GetNbinsX(),h_Data.at(itr)->GetXaxis()->GetXbins()->GetArray());
       else
-	ratioHisto = new TH1F("tmp","tmp",h_Data.at(itr)->GetNbinsX(),
+	ratioHisto = new TH1D("tmp","tmp",h_Data.at(itr)->GetNbinsX(),
 			      h_Data.at(itr)->GetBinLowEdge(1),
 			      h_Data.at(itr)->GetBinLowEdge(h_Data.at(itr)->GetNbinsX())+h_Data.at(itr)->GetBinWidth(1));
       ratioHisto->Sumw2();
