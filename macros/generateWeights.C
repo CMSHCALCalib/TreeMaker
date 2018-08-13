@@ -34,7 +34,7 @@ void generateWeights(std::string dataFileList, std::string mcFileList)
   
 
   //book histo
-  TH1F* h_puData = (TH1F*)f_pileupProfile->Get("pileup");
+  TH1F* h_puData = (TH1F*)f_pileupProfile->Get("h_pileupGlo");
   TH1F* h_puMC = new TH1F("h_puMC","h_puMC",100,0,100);
 
   TH1F* h_weights = new TH1F("h_weights","h_weights",100,0,100);

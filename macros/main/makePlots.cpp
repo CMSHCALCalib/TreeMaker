@@ -19,8 +19,57 @@
 #include "interface/HistoFactory.h"
 #include "interface/dataPuFunc.h"
 
+
+//########### Config #####################
 std::vector<int> puVector{0,20,30,40,50,100};
 std::vector<int> ietaVector{16,24,29};
+
+float rhThr_HB    = 0.8;
+float rhThr_HE_d1 = 0.1;
+float rhThr_HE    = 0.2;
+
+bool calibrate = false;
+//########### End config #################
+
+
+void calibrateEnergy(float& en, float& enRAW, int& depth, int& det)
+{
+  if(det!=2)
+    return;
+
+  if(depth==1)
+    {
+      en *= 1.33;
+      enRAW *= 1.33;
+    }
+  else if(depth==2)
+    {
+      en *= 1;
+      enRAW *= 1;
+    }
+  else if(depth==3)
+    {
+      en *= 1.2;
+      enRAW *= 1.2;
+    }
+  else if(depth==4)
+    {
+      en *= 1.2;
+      enRAW *= 1.2;
+    }
+  else if(depth==5)
+    {
+      en *= 0.95;
+      enRAW *= 0.95;
+    }
+  else if(depth==6)
+    {
+      en *= 1.25;
+      enRAW *= 1.25;
+    }
+  return;
+}
+
 
 TChain* loadChain(std::string fileList)
 {
@@ -148,7 +197,7 @@ int main(int argc, char** argv)
   myHistos.initHisto("h_recHitEnRAW","SubDepthIetaPu",2500,0,5000,"recHitEnRAW [GeV]");
   myHistos.initHisto("h_recHitEnVsPu","SubDepthIeta",100,0,100,"pileup","recHitEn [GeV]");
 
-  myHistos.initHisto("h_recHitNum","SubDepthIetaPu",400,0,4000,"number of recHits");
+  myHistos.initHisto("h_recHitNum","SubDepthIetaPu",500,0,1000,"number of recHits");
   myHistos.initHisto("h_recHitNumVsPu","SubDepthIeta",100,0,100,"pileup","number of recHits");
 
   myHistos.initHisto("h_recHitChi2","SubDepthIetaPu",1000,0,100,"log(recHitChi2)");
@@ -198,11 +247,10 @@ int main(int argc, char** argv)
    	{
    	  // basic rechit selections
    	  if(tt.recHitSub->at(rhItr) == 1 && //HB
-   	     tt.recHitEn->at(rhItr) < 0.8)
+	     tt.recHitEn->at(rhItr) < rhThr_HB)
    	    continue;
    	  if(tt.recHitSub->at(rhItr) == 2 && //HE
-   	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? 0.2 : 0.1))
-   	    //tt.recHitEn->at(rhItr) < 0.8)
+	     tt.recHitEn->at(rhItr) < ((tt.recHitDepth->at(rhItr) > 1) ? rhThr_HE : rhThr_HE_d1))
    	    continue;
 
 	  float en = tt.recHitEn->at(rhItr);
@@ -215,6 +263,10 @@ int main(int argc, char** argv)
 	  int depth = tt.recHitDepth->at(rhItr);
 
 	  int det = tt.recHitSub->at(rhItr);
+
+	  //recalibrate by hand
+	  if(isData && calibrate)
+	    calibrateEnergy(en,enRAW,depth,det);
 
 
 	  myHistos.fill("h_recHitIEta",     truePU,det,depth,ieta, ieta,-1 ,ww);
